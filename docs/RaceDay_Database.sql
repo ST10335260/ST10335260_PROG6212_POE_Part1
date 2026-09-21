@@ -177,7 +177,7 @@ INSERT INTO WeatherInfo (EventID, ForecastDate, Temperature, Conditions, WindSpe
 GO
 
 /* VERIFICATION QUERY  */
-SELECT 'Roles' AS TableName, COUNT(*) AS RowCount FROM Roles
+SELECT 'Roles' AS TableName, COUNT(*) AS RecordCount FROM Roles
 UNION ALL SELECT 'Users', COUNT(*) FROM Users
 UNION ALL SELECT 'Events', COUNT(*) FROM Events
 UNION ALL SELECT 'Categories', COUNT(*) FROM Categories
