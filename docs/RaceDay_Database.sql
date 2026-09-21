@@ -92,3 +92,29 @@ CREATE TABLE Enrolments (
     CONSTRAINT UQ_Enrolments_Participant_Category UNIQUE (ParticipantID, EventCategoryID)
 );
 GO
+
+/* TABLE: Results */
+CREATE TABLE Results (
+    ResultID        INT IDENTITY(1,1) PRIMARY KEY,
+    EnrolmentID     INT           NOT NULL UNIQUE,
+    FinishTime      TIME          NOT NULL,
+    Position        INT           NULL,
+    OverallRank     INT           NULL,
+    CategoryRank    INT           NULL,
+    PacePerKm       DECIMAL(6,2)  NULL,
+    Verified        BIT           DEFAULT 0,
+    CONSTRAINT FK_Results_Enrolments FOREIGN KEY (EnrolmentID) REFERENCES Enrolments(EnrolmentID)
+);
+GO
+
+/* TABLE: WeatherInfo */
+CREATE TABLE WeatherInfo (
+    WeatherID       INT IDENTITY(1,1) PRIMARY KEY,
+    EventID         INT           NOT NULL,
+    ForecastDate    DATE          NOT NULL,
+    Temperature     DECIMAL(5,2)  NULL,
+    Conditions      NVARCHAR(100) NULL,
+    WindSpeed       DECIMAL(5,2)  NULL,
+    CONSTRAINT FK_WeatherInfo_Events FOREIGN KEY (EventID) REFERENCES Events(EventID)
+);
+GO
