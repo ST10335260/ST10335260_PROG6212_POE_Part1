@@ -134,3 +134,27 @@ INSERT INTO Users (Email, PasswordHash, FirstName, LastName, DateOfBirth, RoleID
 ('thabo.mokoena@example.com',   'HASHED_PASSWORD_3', 'Thabo',  'Mokoena', '1996-11-02', 2),
 ('lerato.dube@example.com',     'HASHED_PASSWORD_4', 'Lerato', 'Dube',    '1998-05-30', 2);
 GO
+
+-- Events: 3 events (minimum required), one run by each organiser
+INSERT INTO Events (OrganiserID, EventName, Description, EventDate, Location, DistanceKm) VALUES
+(1, 'Durban Beachfront Marathon', 'Annual road race along the Durban beachfront.', '2026-11-14', 'Durban, KZN',        42.2),
+(1, 'Midlands Trail Run',         'Off-road trail event through the KZN Midlands.', '2026-09-05', 'Howick, KZN',        15.0),
+(2, 'Joburg City Fun Run',        'Family-friendly fun run through the Joburg CBD.', '2026-10-10', 'Johannesburg, GP',    5.0);
+GO
+
+-- Categories: a reusable master list of race distances
+INSERT INTO Categories (CategoryName, Description, DefaultDistance) VALUES
+('5km Fun Run',    'Short, family-friendly distance.', 5.0),
+('10km',           'Standard road running distance.', 10.0),
+('15km Trail',     'Off-road trail distance.', 15.0),
+('Half Marathon',  'Half marathon distance.', 21.1),
+('Full Marathon',  'Full marathon distance.', 42.2);
+GO
+
+-- EventCategories: which categories are offered at which event
+INSERT INTO EventCategories (EventID, CategoryID, EntryFee, MaxParticipants) VALUES
+(1, 2, 150.00, 500),  -- Durban Marathon: 10km
+(1, 5, 300.00, 300),  -- Durban Marathon: Full Marathon
+(2, 3, 180.00, 150),  -- Midlands Trail Run: 15km Trail
+(3, 1,  80.00, 400);  -- Joburg Fun Run: 5km
+GO
