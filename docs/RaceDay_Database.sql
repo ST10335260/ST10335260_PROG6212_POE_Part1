@@ -61,3 +61,17 @@ CREATE TABLE Categories (
     CreatedAt       DATETIME2     DEFAULT GETUTCDATE()
 );
 GO
+
+/* TABLE: EventCategories */
+CREATE TABLE EventCategories (
+    EventCategoryID     INT IDENTITY(1,1) PRIMARY KEY,
+    EventID             INT           NOT NULL,
+    CategoryID          INT           NOT NULL,
+    EntryFee            DECIMAL(8,2)  NOT NULL DEFAULT 0,
+    MaxParticipants     INT           NOT NULL DEFAULT 100,
+    CurrentParticipants INT           NOT NULL DEFAULT 0,
+    CreatedAt           DATETIME2     DEFAULT GETUTCDATE(),
+    CONSTRAINT FK_EventCategories_Events FOREIGN KEY (EventID) REFERENCES Events(EventID),
+    CONSTRAINT FK_EventCategories_Categories FOREIGN KEY (CategoryID) REFERENCES Categories(CategoryID)
+);
+GO
