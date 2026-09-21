@@ -51,3 +51,13 @@ CREATE TABLE Events (
     CONSTRAINT FK_Events_Users FOREIGN KEY (OrganiserID) REFERENCES Users(UserID)
 );
 GO
+
+/* TABLE: Categories */
+CREATE TABLE Categories (
+    CategoryID      INT IDENTITY(1,1) PRIMARY KEY,
+    CategoryName    NVARCHAR(100) NOT NULL,
+    Description     NVARCHAR(255) NULL,
+    DefaultDistance DECIMAL(6,2)  NULL,
+    CreatedAt       DATETIME2     DEFAULT GETUTCDATE()
+);
+GO
