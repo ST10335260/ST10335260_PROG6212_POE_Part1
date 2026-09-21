@@ -158,3 +158,31 @@ INSERT INTO EventCategories (EventID, CategoryID, EntryFee, MaxParticipants) VAL
 (2, 3, 180.00, 150),  -- Midlands Trail Run: 15km Trail
 (3, 1,  80.00, 400);  -- Joburg Fun Run: 5km
 GO
+
+-- Enrolments: sample enrolments linking participants to event categories
+INSERT INTO Enrolments (EventID, ParticipantID, EventCategoryID, Status, PaymentStatus, BibNumber) VALUES
+(1, 3, 1, 'Confirmed', 'Paid', 1001),  -- Thabo enrols in the Durban 10km
+(1, 4, 2, 'Confirmed', 'Paid', 1002),  -- Lerato enrols in the Full Marathon
+(2, 3, 3, 'Confirmed', 'Paid', 1003);  -- Thabo also enrols in the Midlands Trail
+GO
+
+-- Results: sample result for a completed enrolment
+INSERT INTO Results (EnrolmentID, FinishTime, Position, OverallRank, CategoryRank, PacePerKm, Verified) VALUES
+(1, '00:48:32', 1, 1, 1, 4.85, 1);
+GO
+
+-- WeatherInfo: sample forecast for an upcoming event
+INSERT INTO WeatherInfo (EventID, ForecastDate, Temperature, Conditions, WindSpeed) VALUES
+(1, '2026-11-14', 24.5, 'Partly cloudy', 12.0);
+GO
+
+/* VERIFICATION QUERY  */
+SELECT 'Roles' AS TableName, COUNT(*) AS RowCount FROM Roles
+UNION ALL SELECT 'Users', COUNT(*) FROM Users
+UNION ALL SELECT 'Events', COUNT(*) FROM Events
+UNION ALL SELECT 'Categories', COUNT(*) FROM Categories
+UNION ALL SELECT 'EventCategories', COUNT(*) FROM EventCategories
+UNION ALL SELECT 'Enrolments', COUNT(*) FROM Enrolments
+UNION ALL SELECT 'Results', COUNT(*) FROM Results
+UNION ALL SELECT 'WeatherInfo', COUNT(*) FROM WeatherInfo;
+GO
