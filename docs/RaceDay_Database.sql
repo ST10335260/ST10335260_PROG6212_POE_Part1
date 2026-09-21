@@ -36,3 +36,18 @@ CREATE TABLE Users (
     CONSTRAINT FK_Users_Roles FOREIGN KEY (RoleID) REFERENCES Roles(RoleID)
 );
 GO
+
+/* TABLE: Events */
+CREATE TABLE Events (
+    EventID         INT IDENTITY(1,1) PRIMARY KEY,
+    OrganiserID     INT           NOT NULL,
+    EventName       NVARCHAR(150) NOT NULL,
+    Description     NVARCHAR(MAX) NULL,
+    EventDate       DATE          NOT NULL,
+    Location        NVARCHAR(150) NOT NULL,
+    DistanceKm      DECIMAL(6,2)  NULL,
+    IsActive        BIT           DEFAULT 1,
+    CreatedAt       DATETIME2     DEFAULT GETUTCDATE(),
+    CONSTRAINT FK_Events_Users FOREIGN KEY (OrganiserID) REFERENCES Users(UserID)
+);
+GO
