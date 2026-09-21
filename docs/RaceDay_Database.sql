@@ -118,3 +118,19 @@ CREATE TABLE WeatherInfo (
     CONSTRAINT FK_WeatherInfo_Events FOREIGN KEY (EventID) REFERENCES Events(EventID)
 );
 GO
+
+/* SEED DATA */
+
+-- Roles
+INSERT INTO Roles (RoleName, Description) VALUES
+('Organiser',   'Creates and manages events, categories and results.'),
+('Participant', 'Browses events, enrols in categories and views results.');
+GO
+
+-- Users: 2 Organisers, 2 Participants (minimum required)
+INSERT INTO Users (Email, PasswordHash, FirstName, LastName, DateOfBirth, RoleID) VALUES
+('sipho.ndlovu@raceday.co.za',  'HASHED_PASSWORD_1', 'Sipho',  'Ndlovu',  '1985-03-14', 1),
+('amanda.pillay@raceday.co.za', 'HASHED_PASSWORD_2', 'Amanda', 'Pillay',  '1990-07-22', 1),
+('thabo.mokoena@example.com',   'HASHED_PASSWORD_3', 'Thabo',  'Mokoena', '1996-11-02', 2),
+('lerato.dube@example.com',     'HASHED_PASSWORD_4', 'Lerato', 'Dube',    '1998-05-30', 2);
+GO
