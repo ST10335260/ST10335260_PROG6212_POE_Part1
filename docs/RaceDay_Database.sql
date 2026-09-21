@@ -75,3 +75,20 @@ CREATE TABLE EventCategories (
     CONSTRAINT FK_EventCategories_Categories FOREIGN KEY (CategoryID) REFERENCES Categories(CategoryID)
 );
 GO
+
+/* TABLE: Enrolments */
+CREATE TABLE Enrolments (
+    EnrolmentID     INT IDENTITY(1,1) PRIMARY KEY,
+    EventID         INT           NOT NULL,
+    ParticipantID   INT           NOT NULL,
+    EventCategoryID INT           NOT NULL,
+    EnrolmentDate   DATETIME2     DEFAULT GETUTCDATE(),
+    Status          NVARCHAR(50)  NOT NULL DEFAULT 'Pending',
+    PaymentStatus   NVARCHAR(50)  NOT NULL DEFAULT 'Pending',
+    BibNumber       INT           NULL,
+    CONSTRAINT FK_Enrolments_Events FOREIGN KEY (EventID) REFERENCES Events(EventID),
+    CONSTRAINT FK_Enrolments_Users FOREIGN KEY (ParticipantID) REFERENCES Users(UserID),
+    CONSTRAINT FK_Enrolments_EventCategories FOREIGN KEY (EventCategoryID) REFERENCES EventCategories(EventCategoryID),
+    CONSTRAINT UQ_Enrolments_Participant_Category UNIQUE (ParticipantID, EventCategoryID)
+);
+GO
