@@ -66,3 +66,9 @@ A GitHub Actions workflow validates that the /docs folder and all required
 planning files are present on every push.
 
 ![CI build success](docs/RaceDay_ci_build_success.png)
+
+## Video Walkthrough
+
+Unlisted YouTube video explaining the ERD decisions, API endpoint plan
+choices, and a live run of the SQL script in SSMS:
+https://youtu.be/RxXAerIaFFw
