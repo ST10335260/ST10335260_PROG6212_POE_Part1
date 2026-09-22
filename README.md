@@ -25,3 +25,31 @@ written in Part 2.
 - Enrol in an event category and receive a bib number
 - Track their own enrolments and payment status
 - View their own race results once published
+
+## Data Model (Section A – ERD)
+
+![RaceDay ERD](docs/RaceDay_ERD.png)
+
+The database has 8 entities:
+
+| Entity | Purpose |
+|---|---|
+| Roles | Lookup table for the two roles: Organiser and Participant |
+| Users | Every user account; RoleID says whether they are an Organiser or Participant |
+| Events | A race event created and owned by one Organiser |
+| Categories | A reusable master list of race distances (e.g. 5km, 10km, Half Marathon) |
+| EventCategories | Links a Category to a specific Event, with that event's entry fee and participant cap |
+| Enrolments | A Participant enrolling into one EventCategory |
+| Results | The finishing result captured for one Enrolment (one-to-one) |
+| WeatherInfo | Optional forecast information linked to an Event |
+
+**Relationships:**
+- Roles -> Users (1-to-many)
+- Users -> Events (1-to-many, an Organiser creates many Events)
+- Events -> EventCategories (1-to-many)
+- Categories -> EventCategories (1-to-many)
+- Events -> Enrolments (1-to-many)
+- Users -> Enrolments (1-to-many, a Participant makes many Enrolments)
+- EventCategories -> Enrolments (1-to-many, capped by MaxParticipants)
+- Enrolments -> Results (1-to-1)
+- Events -> WeatherInfo (1-to-many)
