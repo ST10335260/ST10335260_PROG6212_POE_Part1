@@ -59,3 +59,10 @@ The database has 8 entities:
 See [docs/RaceDay_API_Endpoint_Plan.pdf](docs/RaceDay_API_Endpoint_Plan.pdf)
 for the full endpoint table covering Authentication, User Profile, Events,
 Categories, Enrolments, and Results.
+
+## CI/CD
+
+A GitHub Actions workflow validates that the /docs folder and all required
+planning files are present on every push.
+
+![CI build success](docs/RaceDay_ci_build_success.png)
