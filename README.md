@@ -53,3 +53,9 @@ The database has 8 entities:
 - EventCategories -> Enrolments (1-to-many, capped by MaxParticipants)
 - Enrolments -> Results (1-to-1)
 - Events -> WeatherInfo (1-to-many)
+
+## API Endpoint Plan (Section B)
+
+See [docs/RaceDay_API_Endpoint_Plan.pdf](docs/RaceDay_API_Endpoint_Plan.pdf)
+for the full endpoint table covering Authentication, User Profile, Events,
+Categories, Enrolments, and Results.
