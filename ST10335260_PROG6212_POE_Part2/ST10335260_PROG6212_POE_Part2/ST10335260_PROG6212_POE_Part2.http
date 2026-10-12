@@ -1,0 +1,6 @@
+@ST10335260_PROG6212_POE_Part2_HostAddress = http://localhost:5223
+
+GET {{ST10335260_PROG6212_POE_Part2_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
