@@ -21,6 +21,9 @@ public class RaceDayDbContext : DbContext
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Email).IsUnique();
 
+        modelBuilder.Entity<WeatherInfo>()
+            .HasKey(w => w.WeatherId);
+
         modelBuilder.Entity<Enrolment>()
             .HasIndex(e => new { e.ParticipantId, e.EventCategoryId }).IsUnique();
 
@@ -32,8 +35,10 @@ public class RaceDayDbContext : DbContext
             .HasForeignKey(u => u.RoleId);
 
         modelBuilder.Entity<Event>()
-            .HasOne(e => e.Organiser).WithMany()
-            .HasForeignKey(e => e.OrganiserId);
+             .HasOne(e => e.Organiser)
+             .WithMany()
+             .HasForeignKey(e => e.OrganiserId)
+             .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<EventCategory>()
             .HasOne(ec => ec.Event).WithMany()
@@ -43,14 +48,22 @@ public class RaceDayDbContext : DbContext
             .HasForeignKey(ec => ec.CategoryId);
 
         modelBuilder.Entity<Enrolment>()
-            .HasOne(e => e.Event).WithMany()
-            .HasForeignKey(e => e.EventId);
+             .HasOne(e => e.Event)
+             .WithMany()
+             .HasForeignKey(e => e.EventId)
+             .OnDelete(DeleteBehavior.Restrict);
+
         modelBuilder.Entity<Enrolment>()
-            .HasOne(e => e.Participant).WithMany()
-            .HasForeignKey(e => e.ParticipantId);
+            .HasOne(e => e.Participant)
+            .WithMany()
+            .HasForeignKey(e => e.ParticipantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         modelBuilder.Entity<Enrolment>()
-            .HasOne(e => e.EventCategory).WithMany()
-            .HasForeignKey(e => e.EventCategoryId);
+            .HasOne(e => e.EventCategory)
+            .WithMany()
+            .HasForeignKey(e => e.EventCategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Result>()
             .HasOne(r => r.Enrolment).WithMany()
