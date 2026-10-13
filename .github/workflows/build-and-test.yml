@@ -1,0 +1,39 @@
+name: Build and Test
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Locate test project
+        id: locate
+        run: |
+          TEST_PROJECT=$(find . -name "*.Tests.csproj" | head -n 1)
+          echo "Found: $TEST_PROJECT"
+          echo "path=$TEST_PROJECT" >> "$GITHUB_OUTPUT"
+
+      - name: Restore dependencies
+        run: dotnet restore "${{ steps.locate.outputs.path }}"
+
+      - name: Build
+        run: dotnet build "${{ steps.locate.outputs.path }}" --no-restore --configuration Release
+
+      - name: Run unit tests
+        run: dotnet test "${{ steps.locate.outputs.path }}" --no-build --configuration Release --verbosity normal
