@@ -223,6 +223,20 @@ namespace ST10335260_PROG6212_POE_Part2.Migrations
                     b.HasKey("RoleId");
 
                     b.ToTable("Roles");
+
+                    b.HasData(
+                        new
+                        {
+                            RoleId = 1,
+                            Description = "Creates and manages events, categories and results",
+                            RoleName = "Organiser"
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            Description = "Browses events and enrols in them",
+                            RoleName = "Participant"
+                        });
                 });
 
             modelBuilder.Entity("ST10335260_PROG6212_POE_Part2.Models.User", b =>

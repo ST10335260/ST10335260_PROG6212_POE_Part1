@@ -15,9 +15,15 @@ public class AuthControllerTests
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
         var context = new RaceDayDbContext(options);
-        context.Roles.Add(new Role { RoleId = 1, RoleName = "Organiser" });
-        context.Roles.Add(new Role { RoleId = 2, RoleName = "Participant" });
-        context.SaveChanges();
+        context.Database.EnsureCreated();
+
+        if (!context.Roles.Any())
+        {
+            context.Roles.Add(new Role { RoleId = 1, RoleName = "Organiser" });
+            context.Roles.Add(new Role { RoleId = 2, RoleName = "Participant" });
+            context.SaveChanges();
+        }
+
         return context;
     }
 

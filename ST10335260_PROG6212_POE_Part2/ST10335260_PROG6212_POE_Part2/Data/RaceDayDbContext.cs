@@ -21,6 +21,11 @@ public class RaceDayDbContext : DbContext
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Email).IsUnique();
 
+        modelBuilder.Entity<Role>().HasData(
+            new Role { RoleId = 1, RoleName = "Organiser", Description = "Creates and manages events, categories and results" },
+            new Role { RoleId = 2, RoleName = "Participant", Description = "Browses events and enrols in them" }
+);
+
         modelBuilder.Entity<WeatherInfo>()
             .HasKey(w => w.WeatherId);
 
