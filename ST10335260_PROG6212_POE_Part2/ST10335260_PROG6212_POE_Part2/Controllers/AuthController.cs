@@ -17,19 +17,24 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterDto dto)
     {
-        if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
+        var email = dto.Email.Trim().ToLowerInvariant();
+
+        if (await _context.Users.AnyAsync(u => u.Email == email))
             return Conflict(new { message = "Email already registered." });
 
         var role = await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == dto.Role);
         if (role is null)
             return BadRequest(new { message = "Role must be 'Organiser' or 'Participant'." });
 
+        if (dto.DateOfBirth.Date >= DateTime.UtcNow.Date)
+            return BadRequest(new { message = "Date of birth must be in the past." });
+
         var user = new User
         {
-            Email = dto.Email,
+            Email = email,
             PasswordHash = PasswordHasher.Hash(dto.Password),
-            FirstName = dto.FirstName,
-            LastName = dto.LastName,
+            FirstName = dto.FirstName.Trim(),
+            LastName = dto.LastName.Trim(),
             DateOfBirth = dto.DateOfBirth,
             RoleId = role.RoleId
         };
@@ -43,16 +48,25 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginDto dto)
     {
+        var email = dto.Email.Trim().ToLowerInvariant();
         var user = await _context.Users.Include(u => u.Role)
-            .FirstOrDefaultAsync(u => u.Email == dto.Email);
+            .FirstOrDefaultAsync(u => u.Email == email);
 
-        if (user is null || !PasswordHasher.Verify(dto.Password, user.PasswordHash))
+        if (user is null || !user.IsActive || !PasswordHasher.Verify(dto.Password, user.PasswordHash))
             return Unauthorized(new { message = "Invalid credentials." });
 
         HttpContext.Session.SetInt32("UserId", user.UserId);
         HttpContext.Session.SetString("Role", user.Role!.RoleName);
 
-        return Ok(new { user.UserId, user.Email, Role = user.Role.RoleName });
+        return Ok(new
+        {
+            user.UserId,
+            user.Email,
+            user.FirstName,
+            user.LastName,
+            user.ProfilePictureUrl,
+            Role = user.Role.RoleName
+        });
     }
 
     [HttpPost("logout")]
