@@ -1,0 +1,70 @@
+@model List<EnrolmentInfo>
+@{
+    ViewData["Title"] = "My enrolments";
+    var active = Model.Where(e => e.Status != EnrolmentStatus.Cancelled).OrderBy(e => e.EventDate).ToList();
+    var cancelled = Model.Where(e => e.Status == EnrolmentStatus.Cancelled).ToList();
+}
+<section class="page-head">
+    <div class="container">
+        <h1>My enrolments</h1>
+        <p class="sub">Green means confirmed by the organiser. Amber means we are still waiting for confirmation.</p>
+    </div>
+</section>
+<div class="container page-body">
+    @if (active.Count == 0)
+    {
+        <div class="rd-card empty-state">
+            <div class="art"><i class="bi bi-ticket-perforated"></i></div>
+            <h3>You have not entered any events yet</h3>
+            <p>Find an event you like, choose a category and enter. Your entries will show up here.</p>
+            <a class="btn btn-primary" asp-controller="Home" asp-action="Index">Browse events</a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var e in active)
+            {
+                <div class="col-12">
+                    <div class="rd-card enrol-card">
+                        <div class="thumb-lg ph-run" style="background:#1c274f">
+                            @if (!string.IsNullOrEmpty(e.BannerUrl)) { <img src="@e.BannerUrl" alt="" loading="lazy" onerror="this.remove()" /> }
+                        </div>
+                        <div class="flex-grow-1 d-flex flex-column flex-md-row justify-content-between gap-3">
+                            <div>
+                                <a asp-controller="Events" asp-action="Details" asp-route-id="@e.EventId" class="row-title fs-5">@e.EventName</a>
+                                <div class="row-sub"><i class="bi bi-calendar-event"></i> @Format.LongDate(e.EventDate) at @Format.Time(e.EventDate) &middot; <i class="bi bi-geo-alt"></i> @e.Location</div>
+                                <div class="chip-row mt-2">
+                                    <span class="chip">@e.CategoryName</span>
+                                    <span class="chip price">@Format.Money(e.EntryFee)</span>
+                                    @if (e.BibNumber is { } bib) { <span class="bib">@bib</span> }
+                                </div>
+                            </div>
+                            <div class="d-flex flex-md-column align-items-md-end justify-content-between gap-2">
+                                <partial name="_StatusChip" model="e.Status" />
+                                @if (e.EventDate > DateTime.UtcNow)
+                                {
+                                    <form asp-action="Cancel" asp-route-id="@e.EnrolmentId" method="post" data-confirm="Cancel your entry to @e.EventName? Your place will be released." data-confirm-title="Cancel entry" data-confirm-ok="Yes, cancel entry">
+                                        <button class="btn btn-sm btn-outline-primary" type="submit">Cancel entry</button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    @if (cancelled.Count > 0)
+    {
+        <div class="section-title"><h2>Cancelled</h2></div>
+        <div class="rd-card"><div class="table-responsive"><table class="rd-table">
+            <thead><tr><th>Event</th><th>Category</th><th>Date</th><th>Status</th></tr></thead>
+            <tbody>
+            @foreach (var e in cancelled)
+            {
+                <tr><td class="row-title">@e.EventName</td><td>@e.CategoryName</td><td>@Format.ShortDate(e.EventDate)</td><td><partial name="_StatusChip" model="e.Status" /></td></tr>
+            }
+            </tbody></table></div></div>
+    }
+</div>

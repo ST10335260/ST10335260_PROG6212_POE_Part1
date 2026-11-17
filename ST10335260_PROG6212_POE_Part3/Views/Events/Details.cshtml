@@ -1,0 +1,143 @@
+@model EventDetailsViewModel
+@{
+    var ev = Model.Event;
+    ViewData["Title"] = ev.EventName;
+    var user = Context.Session.GetSessionUser();
+}
+<section class="event-hero ph-@Format.TypeClass(ev.EventType)">
+    @if (!string.IsNullOrEmpty(ev.BannerUrl))
+    {
+        <img src="@ev.BannerUrl" alt="@ev.EventName banner" onerror="this.remove()" />
+    }
+    <div class="container">
+        <span class="type-pill" style="position:static;display:inline-flex"><i class="bi @Format.TypeIcon(ev.EventType)"></i> @ev.EventType</span>
+        <h1>@ev.EventName</h1>
+        <div class="where">
+            <span><i class="bi bi-calendar-event-fill"></i> @Format.LongDate(ev.EventDate)</span>
+            <span><i class="bi bi-clock-fill"></i> @Format.Time(ev.EventDate)</span>
+            <span><i class="bi bi-geo-alt-fill"></i> @ev.Location</span>
+        </div>
+    </div>
+</section>
+
+<div class="container page-body">
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="rd-card rd-card-pad mb-4">
+                <h3>About this event</h3>
+                <p class="mb-0">@(string.IsNullOrWhiteSpace(ev.Description) ? "The organiser has not added a description yet." : ev.Description)</p>
+            </div>
+
+            <div class="rd-card mb-4">
+                <div class="card-title-row"><h3>Categories and entry</h3>
+                    @if (ev.IsPast) { <span class="status-chip status-cancelled">Event finished</span> }
+                </div>
+                @if (Model.Categories.Count == 0)
+                {
+                    <div class="empty-state">
+                        <div class="art"><i class="bi bi-list-check"></i></div>
+                        <h3>Categories coming soon</h3>
+                        <p>The organiser has not opened any race categories for this event yet.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="rd-table">
+                            <thead><tr><th>Category</th><th>Distance</th><th>Entry fee</th><th>Places</th><th class="text-end">Entry</th></tr></thead>
+                            <tbody>
+                            @foreach (var c in Model.Categories)
+                            {
+                                Model.MyEnrolments.TryGetValue(c.EventCategoryId, out var mine);
+                                var activeMine = mine is not null && mine.Status != EnrolmentStatus.Cancelled;
+                                <tr>
+                                    <td><div class="row-title">@c.CategoryName</div>@if (!string.IsNullOrWhiteSpace(c.Description)) { <div class="row-sub">@c.Description</div> }</td>
+                                    <td>@Format.Distance(c.DefaultDistance ?? ev.DistanceKm)</td>
+                                    <td class="fw-bold">@Format.Money(c.EntryFee)</td>
+                                    <td>
+                                        <div class="spots @(c.SpotsLeft <= 0 ? "full" : "")"><span style="width:@(c.PercentFull)%"></span></div>
+                                        <div class="row-sub mt-1">@(c.SpotsLeft <= 0 ? "Full" : $"{c.SpotsLeft} of {c.MaxParticipants} left")</div>
+                                    </td>
+                                    <td class="text-end">
+                                        @if (activeMine)
+                                        {
+                                            <partial name="_StatusChip" model="mine!.Status" />
+                                        }
+                                        else if (ev.IsPast)
+                                        {
+                                            <span class="text-muted">Closed</span>
+                                        }
+                                        else if (user is { IsParticipant: true })
+                                        {
+                                            if (c.SpotsLeft <= 0)
+                                            {
+                                                <span class="status-chip status-cancelled">Full</span>
+                                            }
+                                            else
+                                            {
+                                                <form asp-action="Enrol" asp-route-id="@ev.EventId" method="post" data-confirm="Enter the @c.CategoryName for @Format.Money(c.EntryFee)? The organiser will confirm your entry." data-confirm-title="Confirm entry" data-confirm-ok="Enter now">
+                                                    <input type="hidden" name="eventCategoryId" value="@c.EventCategoryId" />
+                                                    <button class="btn btn-primary btn-sm" type="submit">Enter</button>
+                                                </form>
+                                            }
+                                        }
+                                        else if (user is { IsOrganiser: true })
+                                        {
+                                            <span class="text-muted small">Organiser view</span>
+                                        }
+                                        else
+                                        {
+                                            <a class="btn btn-outline-primary btn-sm" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path">Log in to enter</a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+
+            @foreach (var board in Model.Leaderboards)
+            {
+                var cat = Model.Categories.First(c => c.EventCategoryId == board.Key);
+                <div class="rd-card mb-4">
+                    <div class="card-title-row"><h3><i class="bi bi-trophy-fill text-warning"></i> @cat.CategoryName results</h3></div>
+                    <div class="table-responsive">
+                        <table class="rd-table">
+                            <thead><tr><th>Rank</th><th>Runner</th><th>Bib</th><th>Time</th><th>Pace</th></tr></thead>
+                            <tbody>
+                            @foreach (var r in board.Value.OrderBy(r => r.Position).Take(10))
+                            {
+                                <tr>
+                                    <td><span class="rank-pill @(r.Position <= 3 ? "rank-" + r.Position : "")">@Format.Ordinal(r.Position)</span></td>
+                                    <td class="row-title">@r.ParticipantName</td>
+                                    <td>@(r.BibNumber is { } b ? Html.Raw($"<span class=\"bib\">{b}</span>") : Html.Raw("-"))</td>
+                                    <td class="fw-bold">@Format.FinishTime(r.FinishTime)</td>
+                                    <td>@Format.Pace(r.PacePerKm)</td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-4">
+            <div class="rd-card rd-card-pad">
+                <h3>Event facts</h3>
+                <div class="fact"><div class="ico"><i class="bi bi-calendar-event"></i></div><div><div class="k">Date</div><div class="v">@Format.LongDate(ev.EventDate)</div></div></div>
+                <div class="fact"><div class="ico"><i class="bi bi-clock"></i></div><div><div class="k">Start time</div><div class="v">@Format.Time(ev.EventDate)</div></div></div>
+                <div class="fact"><div class="ico"><i class="bi bi-geo-alt"></i></div><div><div class="k">Location</div><div class="v">@ev.Location</div></div></div>
+                <div class="fact"><div class="ico"><i class="bi bi-signpost-split"></i></div><div><div class="k">Distance</div><div class="v">@Format.Distance(ev.DistanceKm)</div></div></div>
+                <div class="fact"><div class="ico"><i class="bi bi-people"></i></div><div><div class="k">Entered so far</div><div class="v">@ev.EnrolmentCount</div></div></div>
+                @if (!string.IsNullOrWhiteSpace(ev.OrganiserName))
+                {
+                    <div class="fact"><div class="ico"><i class="bi bi-flag"></i></div><div><div class="k">Organiser</div><div class="v">@ev.OrganiserName</div></div></div>
+                }
+            </div>
+            <a class="btn btn-soft w-100 mt-3" asp-controller="Home" asp-action="Index"><i class="bi bi-arrow-left"></i> Back to all events</a>
+        </div>
+    </div>
+</div>

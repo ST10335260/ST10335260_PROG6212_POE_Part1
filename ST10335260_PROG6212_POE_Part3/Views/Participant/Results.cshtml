@@ -1,0 +1,44 @@
+@model List<MyResultInfo>
+@{
+    ViewData["Title"] = "My results";
+    var best = Model.OrderBy(r => r.OverallRank).FirstOrDefault();
+}
+<section class="page-head">
+    <div class="container">
+        <h1>My results</h1>
+        <p class="sub">Official, published results from events you have completed.</p>
+    </div>
+</section>
+<div class="container page-body">
+    @if (Model.Count == 0)
+    {
+        <div class="rd-card empty-state">
+            <div class="art"><i class="bi bi-trophy"></i></div>
+            <h3>No published results yet</h3>
+            <p>Once an organiser publishes the results of an event you finished, your time and rank will appear here.</p>
+            <a class="btn btn-primary" asp-controller="Participant" asp-action="Enrolments">View my enrolments</a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3 mb-4">
+            <div class="col-sm-6 col-lg-4"><div class="rd-card stat-tile"><div class="ico ico-orange"><i class="bi bi-flag-fill"></i></div><div><div class="num">@Model.Count</div><div class="lbl">Events finished</div></div></div></div>
+            <div class="col-sm-6 col-lg-4"><div class="rd-card stat-tile"><div class="ico ico-volt"><i class="bi bi-trophy-fill"></i></div><div><div class="num">@(best is null ? "-" : Format.Ordinal(best.OverallRank))</div><div class="lbl">Best overall rank</div></div></div></div>
+            <div class="col-sm-6 col-lg-4"><div class="rd-card stat-tile"><div class="ico ico-blue"><i class="bi bi-stopwatch-fill"></i></div><div><div class="num">@(best is null ? "-" : Format.FinishTime(best.FinishTime))</div><div class="lbl">Time at best rank</div></div></div></div>
+        </div>
+        <div class="rd-card"><div class="table-responsive"><table class="rd-table">
+            <thead><tr><th>Event</th><th>Category</th><th>Time</th><th>Pace</th><th>Rank</th></tr></thead>
+            <tbody>
+            @foreach (var r in Model.OrderByDescending(r => r.EventDate))
+            {
+                <tr>
+                    <td><a asp-controller="Events" asp-action="Details" asp-route-id="@r.EventId" class="row-title">@r.EventName</a><div class="row-sub">@Format.ShortDate(r.EventDate)</div></td>
+                    <td>@r.CategoryName</td>
+                    <td class="time-big">@Format.FinishTime(r.FinishTime)</td>
+                    <td>@Format.Pace(r.PacePerKm)</td>
+                    <td><span class="rank-pill @(r.OverallRank <= 3 ? "rank-" + r.OverallRank : "")">@Format.Ordinal(r.OverallRank)<small>of @r.TotalFinishers</small></span></td>
+                </tr>
+            }
+            </tbody></table></div></div>
+    }
+</div>
