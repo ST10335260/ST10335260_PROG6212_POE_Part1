@@ -17,23 +17,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup .NET 8
+      - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
 
-      - name: Locate test project
-        id: locate
-        run: |
-          TEST_PROJECT=$(find . -name "*.Tests.csproj" | head -n 1)
-          echo "Found: $TEST_PROJECT"
-          echo "path=$TEST_PROJECT" >> "$GITHUB_OUTPUT"
+      - name: Restore API and tests
+        run: dotnet restore ST10335260_PROG6212_POE_Part2/ST10335260_PROG6212_POE_Part2.Tests/ST10335260_PROG6212_POE_Part2.Tests.csproj
 
-      - name: Restore dependencies
-        run: dotnet restore "${{ steps.locate.outputs.path }}"
-
-      - name: Build
-        run: dotnet build "${{ steps.locate.outputs.path }}" --no-restore --configuration Release
+      - name: Build API and tests
+        run: dotnet build ST10335260_PROG6212_POE_Part2/ST10335260_PROG6212_POE_Part2.Tests/ST10335260_PROG6212_POE_Part2.Tests.csproj --no-restore --configuration Release
 
       - name: Run unit tests
-        run: dotnet test "${{ steps.locate.outputs.path }}" --no-build --configuration Release --verbosity normal
+        run: dotnet test ST10335260_PROG6212_POE_Part2/ST10335260_PROG6212_POE_Part2.Tests/ST10335260_PROG6212_POE_Part2.Tests.csproj --no-build --configuration Release --verbosity normal
+
+      - name: Restore MVC front end
+        run: dotnet restore ST10335260_PROG6212_POE_Part3/ST10335260_PROG6212_POE_Part3.csproj
+
+      - name: Build MVC front end
+        run: dotnet build ST10335260_PROG6212_POE_Part3/ST10335260_PROG6212_POE_Part3.csproj --no-restore --configuration Release
