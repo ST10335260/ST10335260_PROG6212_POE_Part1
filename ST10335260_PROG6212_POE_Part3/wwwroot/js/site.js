@@ -1,6 +1,10 @@
 (function () {
   'use strict';
 
+  document.querySelectorAll('.modal').forEach(function (m) {
+    if (m.parentElement !== document.body) document.body.appendChild(m);
+  });
+
   document.querySelectorAll('.rd-alert[data-autodismiss]').forEach(function (el) {
     setTimeout(function () {
       el.style.transition = 'opacity .4s ease, transform .4s ease';
