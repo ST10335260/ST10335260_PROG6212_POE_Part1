@@ -257,8 +257,8 @@ h5 { font-size: 1.15rem; }
 .event-picker .form-select { max-width: 420px; }
 
 .tabs-soft { display: inline-flex; background: #EEF1F8; padding: .3rem; border-radius: 12px; gap: .2rem; flex-wrap: wrap; }
-.tabs-soft a { padding: .4rem .95rem; border-radius: 9px; font-weight: 600; font-size: .88rem; color: #475467; }
-.tabs-soft a.active { background: #fff; color: var(--rd-ink); box-shadow: 0 1px 3px rgba(16, 24, 40, .12); }
+.tabs-soft a, .tabs-soft label { cursor: pointer; padding: .4rem .95rem; border-radius: 9px; font-weight: 600; font-size: .88rem; color: #475467; }
+.tabs-soft a.active, .tabs-soft label.active { background: #fff; color: var(--rd-ink); box-shadow: 0 1px 3px rgba(16, 24, 40, .12); }
 
 .modal-content { border: 0; border-radius: 18px; box-shadow: 0 30px 80px rgba(11, 18, 38, .3); }
 .modal-header { border-bottom: 1px solid var(--rd-line); }
@@ -291,3 +291,6 @@ h5 { font-size: 1.15rem; }
 .form-switch .form-check-label { margin-left: .5rem; }
 .form-switch { display: flex; align-items: center; gap: .25rem; }
 .table-responsive { width: 100%; }
+
+.modal { z-index: 1090; }
+.modal-backdrop { z-index: 1085; }
