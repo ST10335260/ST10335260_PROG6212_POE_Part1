@@ -1,0 +1,71 @@
+@model ProfileViewModel
+@{
+    ViewData["Title"] = "My profile";
+    var initials = ((Model.FirstName.Length > 0 ? Model.FirstName[..1] : "") + (Model.LastName.Length > 0 ? Model.LastName[..1] : "")).ToUpperInvariant();
+}
+<section class="page-head">
+    <div class="container">
+        <h1>My profile</h1>
+        <p class="sub">Keep your details up to date and add a picture so organisers and friends can spot you.</p>
+    </div>
+</section>
+<div class="container page-body">
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="rd-card rd-card-pad text-center">
+                <div class="avatar avatar-lg mx-auto mb-3">
+                    <span>@initials</span>
+                    @if (!string.IsNullOrEmpty(Model.ProfilePictureUrl))
+                    {
+                        <img src="@Model.ProfilePictureUrl" alt="Profile picture" onerror="this.remove()" />
+                    }
+                </div>
+                <h3 class="mb-1">@Model.FirstName @Model.LastName</h3>
+                <span class="role-badge @(Model.Role == "Participant" ? "participant" : "")">@Model.Role</span>
+                <form asp-action="UploadPicture" method="post" enctype="multipart/form-data" class="mt-4 text-start">
+                    <label class="form-label" for="picture">Profile picture</label>
+                    <input type="file" class="form-control" id="picture" name="picture" accept="image/png,image/jpeg,image/webp,image/gif" required />
+                    <div class="form-text">JPG, PNG, WebP or GIF, up to 5 MB.</div>
+                    <button type="submit" class="btn btn-dark w-100 mt-3" data-loading="Uploading"><i class="bi bi-cloud-arrow-up"></i> Upload picture</button>
+                </form>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div class="rd-card rd-card-pad">
+                <div class="card-title-row px-0 pt-0"><h3>Personal details</h3></div>
+                <form asp-action="Profile" method="post" class="pt-3" novalidate>
+                    <div asp-validation-summary="ModelOnly" class="rd-form-errors"></div>
+                    <input type="hidden" asp-for="Role" />
+                    <input type="hidden" asp-for="ProfilePictureUrl" />
+                    <input type="hidden" asp-for="DateOfBirth" />
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <label asp-for="FirstName" class="form-label"></label>
+                            <input asp-for="FirstName" class="form-control" />
+                            <span asp-validation-for="FirstName" class="field-validation-error"></span>
+                        </div>
+                        <div class="col-sm-6">
+                            <label asp-for="LastName" class="form-label"></label>
+                            <input asp-for="LastName" class="form-control" />
+                            <span asp-validation-for="LastName" class="field-validation-error"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Email" class="form-label">Email address</label>
+                            <input asp-for="Email" class="form-control" />
+                            <span asp-validation-for="Email" class="field-validation-error"></span>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label">Date of birth</label>
+                            <input class="form-control" value="@Model.DateOfBirth.ToString("d MMMM yyyy")" disabled />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label">Account type</label>
+                            <input class="form-control" value="@Model.Role" disabled />
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-4" data-loading="Saving">Save changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

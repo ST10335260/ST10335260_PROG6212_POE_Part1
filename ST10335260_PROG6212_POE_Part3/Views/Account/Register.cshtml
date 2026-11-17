@@ -1,0 +1,70 @@
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "Create your account";
+}
+<div class="auth-wrap">
+    <div class="auth-aside">
+        <h1>Join the <em>field</em></h1>
+        <p class="lead" style="color: rgba(255,255,255,.75)">One account to enter events, or to create and run them.</p>
+        <ul>
+            <li><i class="bi bi-person-check-fill"></i> Participants enter events and see results</li>
+            <li><i class="bi bi-clipboard2-data-fill"></i> Organisers publish events and manage entries</li>
+            <li><i class="bi bi-camera-fill"></i> Add a profile picture any time</li>
+        </ul>
+    </div>
+    <div class="auth-main">
+        <div class="rd-card auth-card rd-card-pad" style="max-width: 560px">
+            <h2>Create your account</h2>
+            <form asp-action="Register" method="post" novalidate>
+                <div asp-validation-summary="ModelOnly" class="rd-form-errors"></div>
+                <label class="form-label">I want to</label>
+                <div class="role-grid mb-3">
+                    <label class="role-option">
+                        <input type="radio" asp-for="Role" value="Participant" checked="@(Model.Role == "Participant")" />
+                        <span class="role-card"><i class="bi bi-person-running"></i><strong>Take part</strong><span>Enter events and track my results</span></span>
+                    </label>
+                    <label class="role-option">
+                        <input type="radio" asp-for="Role" value="Organiser" checked="@(Model.Role == "Organiser")" />
+                        <span class="role-card"><i class="bi bi-flag-fill"></i><strong>Organise</strong><span>Create events and manage entries</span></span>
+                    </label>
+                </div>
+                <span asp-validation-for="Role" class="field-validation-error"></span>
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label asp-for="FirstName" class="form-label"></label>
+                        <input asp-for="FirstName" class="form-control" autocomplete="given-name" />
+                        <span asp-validation-for="FirstName" class="field-validation-error"></span>
+                    </div>
+                    <div class="col-sm-6">
+                        <label asp-for="LastName" class="form-label"></label>
+                        <input asp-for="LastName" class="form-control" autocomplete="family-name" />
+                        <span asp-validation-for="LastName" class="field-validation-error"></span>
+                    </div>
+                    <div class="col-sm-7">
+                        <label asp-for="Email" class="form-label">Email address</label>
+                        <input asp-for="Email" class="form-control" autocomplete="email" />
+                        <span asp-validation-for="Email" class="field-validation-error"></span>
+                    </div>
+                    <div class="col-sm-5">
+                        <label asp-for="DateOfBirth" class="form-label"></label>
+                        <input asp-for="DateOfBirth" type="date" class="form-control" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        <span asp-validation-for="DateOfBirth" class="field-validation-error"></span>
+                    </div>
+                    <div class="col-sm-6">
+                        <label asp-for="Password" class="form-label"></label>
+                        <input asp-for="Password" class="form-control" autocomplete="new-password" />
+                        <span asp-validation-for="Password" class="field-validation-error"></span>
+                    </div>
+                    <div class="col-sm-6">
+                        <label asp-for="ConfirmPassword" class="form-label"></label>
+                        <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
+                        <span asp-validation-for="ConfirmPassword" class="field-validation-error"></span>
+                    </div>
+                </div>
+                <div class="form-text mt-2">At least 8 characters with a letter and a number.</div>
+                <button type="submit" class="btn btn-primary btn-lg w-100 mt-4" data-loading="Creating account">Create account</button>
+            </form>
+            <p class="text-center mt-4 mb-0 text-muted">Already registered? <a asp-action="Login" class="fw-semibold">Log in</a></p>
+        </div>
+    </div>
+</div>

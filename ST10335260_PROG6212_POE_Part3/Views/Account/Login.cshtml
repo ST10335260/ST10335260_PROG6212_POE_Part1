@@ -1,0 +1,37 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Log in";
+}
+<div class="auth-wrap">
+    <div class="auth-aside">
+        <h1>Welcome <em>back</em></h1>
+        <p class="lead" style="color: rgba(255,255,255,.75)">Log in to manage your entries, follow your results or run your events.</p>
+        <ul>
+            <li><i class="bi bi-check-circle-fill"></i> Enter events in a few clicks</li>
+            <li><i class="bi bi-check-circle-fill"></i> Track enrolments and results</li>
+            <li><i class="bi bi-check-circle-fill"></i> Organisers manage everything in one place</li>
+        </ul>
+    </div>
+    <div class="auth-main">
+        <div class="rd-card auth-card rd-card-pad">
+            <h2>Log in</h2>
+            <p class="text-muted">Use the email and password you registered with.</p>
+            <form asp-action="Login" method="post" novalidate>
+                <div asp-validation-summary="ModelOnly" class="rd-form-errors"></div>
+                <input type="hidden" asp-for="ReturnUrl" />
+                <div class="mb-3">
+                    <label asp-for="Email" class="form-label">Email address</label>
+                    <input asp-for="Email" class="form-control" autocomplete="email" autofocus />
+                    <span asp-validation-for="Email" class="field-validation-error"></span>
+                </div>
+                <div class="mb-4">
+                    <label asp-for="Password" class="form-label">Password</label>
+                    <input asp-for="Password" class="form-control" autocomplete="current-password" />
+                    <span asp-validation-for="Password" class="field-validation-error"></span>
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg w-100" data-loading="Signing in">Log in</button>
+            </form>
+            <p class="text-center mt-4 mb-0 text-muted">New to RaceDay? <a asp-action="Register" class="fw-semibold">Create an account</a></p>
+        </div>
+    </div>
+</div>
