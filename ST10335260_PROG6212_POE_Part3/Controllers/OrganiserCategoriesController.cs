@@ -36,14 +36,57 @@ public class OrganiserCategoriesController : RaceDayController
     [HttpPost("Add")]
     public async Task<IActionResult> Add(AddEventCategoryForm form)
     {
+        var creatingNew = string.Equals(form.Mode, "new", StringComparison.OrdinalIgnoreCase);
+
+        if (creatingNew)
+        {
+            if (string.IsNullOrWhiteSpace(form.NewCategoryName))
+                ModelState.AddModelError(nameof(form.NewCategoryName), "Give the new category a name.");
+        }
+        else if (form.CategoryId is null or < 1)
+        {
+            ModelState.AddModelError(nameof(form.CategoryId), "Choose a category from the list, or create a custom one.");
+        }
+
         if (!ModelState.IsValid)
         {
             Error(FirstModelError());
             return RedirectToAction(nameof(Index), new { eventId = form.EventId });
         }
 
+        var categoryId = form.CategoryId ?? 0;
+
+        if (creatingNew)
+        {
+            var name = form.NewCategoryName!.Trim();
+            var created = await Api.PostAsync<CategoryInfo>("api/categories",
+                new { CategoryName = name, Description = form.NewDescription?.Trim(), DefaultDistance = form.NewDistance });
+
+            if (created.Success && created.Data is not null)
+            {
+                categoryId = created.Data.CategoryId;
+            }
+            else if (created.IsConflict)
+            {
+                var all = await Api.GetAsync<List<CategoryInfo>>("api/categories");
+                var existing = all.Data?.FirstOrDefault(c => string.Equals(c.CategoryName, name, StringComparison.OrdinalIgnoreCase));
+                if (existing is null)
+                {
+                    Error(created.Message ?? "A category with that name already exists.");
+                    return RedirectToAction(nameof(Index), new { eventId = form.EventId });
+                }
+
+                categoryId = existing.CategoryId;
+            }
+            else
+            {
+                Error(created.Message ?? "We could not create that category.");
+                return RedirectToAction(nameof(Index), new { eventId = form.EventId });
+            }
+        }
+
         var result = await Api.PostAsync<EventCategoryInfo>($"api/events/{form.EventId}/categories",
-            new { form.CategoryId, form.EntryFee, form.MaxParticipants });
+            new { CategoryId = categoryId, EntryFee = form.EntryFee, MaxParticipants = form.MaxParticipants });
 
         if (result.Success)
             Success("The category has been added to your event.");
@@ -84,25 +127,5 @@ public class OrganiserCategoriesController : RaceDayController
             Error(result.Message ?? "We could not remove that category.");
 
         return RedirectToAction(nameof(Index), new { eventId });
-    }
-
-    [HttpPost("Create")]
-    public async Task<IActionResult> Create(NewCategoryForm form)
-    {
-        if (!ModelState.IsValid)
-        {
-            Error(FirstModelError());
-            return RedirectToAction(nameof(Index), new { eventId = form.EventId });
-        }
-
-        var result = await Api.PostAsync<CategoryInfo>("api/categories",
-            new { form.CategoryName, form.Description, form.DefaultDistance });
-
-        if (result.Success)
-            Success($"The \"{form.CategoryName.Trim()}\" category is now available. You can add it to your event below.");
-        else
-            Error(result.Message ?? "We could not create that category.");
-
-        return RedirectToAction(nameof(Index), new { eventId = form.EventId });
     }
 }
