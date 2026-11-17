@@ -1,0 +1,72 @@
+@model EventFormViewModel
+@{
+    ViewData["Title"] = Model.IsEdit ? "Edit event" : "New event";
+}
+<section class="page-head">
+    <div class="container"><h1>@(Model.IsEdit ? "Edit event" : "Create an event")</h1><p class="sub">@(Model.IsEdit ? "Update the details participants see." : "Tell people what, when and where. You will add categories next.")</p></div>
+</section>
+<div class="container page-body">
+    <form method="post" enctype="multipart/form-data" asp-action="@(Model.IsEdit ? "Edit" : "Create")" asp-route-id="@(Model.IsEdit ? Model.EventId : null)" novalidate>
+        <div asp-validation-summary="ModelOnly" class="rd-form-errors"></div>
+        <input type="hidden" asp-for="EventId" />
+        <input type="hidden" asp-for="BannerUrl" />
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="rd-card rd-card-pad">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label asp-for="EventName" class="form-label"></label>
+                            <input asp-for="EventName" class="form-control" />
+                            <span asp-validation-for="EventName" class="field-validation-error"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Description" class="form-label"></label>
+                            <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                            <span asp-validation-for="Description" class="field-validation-error"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="EventDate" class="form-label"></label>
+                            <input asp-for="EventDate" type="datetime-local" class="form-control" value="@(Model.EventDate.HasValue ? Format.DateTimeLocal(Model.EventDate.Value) : "")" />
+                            <span asp-validation-for="EventDate" class="field-validation-error"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Location" class="form-label"></label>
+                            <input asp-for="Location" class="form-control" />
+                            <span asp-validation-for="Location" class="field-validation-error"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="DistanceKm" class="form-label"></label>
+                            <input asp-for="DistanceKm" type="number" step="0.1" min="0.1" class="form-control" />
+                            <span asp-validation-for="DistanceKm" class="field-validation-error"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="EventType" class="form-label"></label>
+                            <select asp-for="EventType" class="form-select" asp-items="Html.GetEnumSelectList<EventType>()"></select>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" asp-for="IsActive" role="switch" />
+                                <label class="form-check-label" asp-for="IsActive"></label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="rd-card rd-card-pad">
+                    <label class="form-label" for="Banner">Banner image</label>
+                    <div class="banner-preview @(string.IsNullOrEmpty(Model.BannerUrl) ? "" : "has-image") mb-3" id="bannerPreview">
+                        @if (!string.IsNullOrEmpty(Model.BannerUrl)) { <img src="@Model.BannerUrl" alt="Current banner" onerror="this.remove()" /> }
+                        <div class="hint"><i class="bi bi-image"></i>Choose a banner</div>
+                    </div>
+                    <input type="file" class="form-control" id="Banner" name="Banner" accept="image/png,image/jpeg,image/webp,image/gif" data-preview="#bannerPreview" />
+                    <div class="form-text">JPG, PNG, WebP or GIF up to 5 MB. Stored in Azure Blob storage.</div>
+                </div>
+                <div class="d-grid gap-2 mt-3">
+                    <button type="submit" class="btn btn-primary btn-lg" data-loading="Saving">@(Model.IsEdit ? "Save changes" : "Create event")</button>
+                    <a class="btn btn-soft" asp-action="Index">Cancel</a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

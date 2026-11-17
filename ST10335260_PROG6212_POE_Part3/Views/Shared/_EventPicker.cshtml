@@ -1,0 +1,11 @@
+@model EventPickerViewModel
+<form method="get" asp-controller="@Model.Controller" asp-action="@Model.Action" class="event-picker">
+    <label for="eventId">Event</label>
+    <select id="eventId" name="eventId" class="form-select" data-autosubmit>
+        @foreach (var item in Model.Events)
+        {
+            <option value="@item.EventId" selected="@(item.EventId == Model.SelectedId)">@item.EventName &middot; @Format.ShortDate(item.EventDate)</option>
+        }
+    </select>
+    <noscript><button type="submit" class="btn btn-dark">Show</button></noscript>
+</form>

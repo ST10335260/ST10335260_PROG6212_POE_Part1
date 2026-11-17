@@ -1,0 +1,67 @@
+@model EnrolmentsPageViewModel
+@{
+    ViewData["Title"] = "Enrolments";
+    var sel = Model.Selected;
+    var all = Model.Enrolments;
+    var shown = Model.StatusFilter is { } s ? all.Where(e => e.Status == s).ToList() : all;
+}
+<section class="page-head">
+    <div class="container"><h1>Enrolments</h1><p class="sub">Confirm or cancel entries. A bib number is issued when you confirm.</p></div>
+</section>
+<div class="container page-body">
+    @if (sel is null)
+    {
+        <div class="rd-card empty-state"><div class="art"><i class="bi bi-people"></i></div><h3>No events yet</h3><p>Create an event to start receiving entries.</p><a class="btn btn-primary" asp-controller="OrganiserEvents" asp-action="Create">Create event</a></div>
+    }
+    else
+    {
+        <div class="rd-card rd-card-pad mb-4 d-flex flex-wrap justify-content-between align-items-end gap-3">
+            <div style="min-width:280px;flex:1"><partial name="_EventPicker" model="@(new EventPickerViewModel { Events = Model.Events, SelectedId = sel.EventId, Controller = "OrganiserEnrolments", Action = "Index" })" /></div>
+            <div class="tabs-soft">
+                <a class="@(Model.StatusFilter is null ? "active" : "")" asp-action="Index" asp-route-eventId="@sel.EventId">All (@all.Count)</a>
+                <a class="@(Model.StatusFilter == EnrolmentStatus.Pending ? "active" : "")" asp-action="Index" asp-route-eventId="@sel.EventId" asp-route-status="Pending">Pending (@all.Count(e => e.Status == EnrolmentStatus.Pending))</a>
+                <a class="@(Model.StatusFilter == EnrolmentStatus.Confirmed ? "active" : "")" asp-action="Index" asp-route-eventId="@sel.EventId" asp-route-status="Confirmed">Confirmed (@all.Count(e => e.Status == EnrolmentStatus.Confirmed))</a>
+                <a class="@(Model.StatusFilter == EnrolmentStatus.Cancelled ? "active" : "")" asp-action="Index" asp-route-eventId="@sel.EventId" asp-route-status="Cancelled">Cancelled (@all.Count(e => e.Status == EnrolmentStatus.Cancelled))</a>
+            </div>
+        </div>
+        <div class="rd-card">
+            @if (shown.Count == 0)
+            {
+                <div class="empty-state"><div class="art"><i class="bi bi-inbox"></i></div><h3>@(all.Count == 0 ? "No entries yet" : "Nothing in this view")</h3><p>@(all.Count == 0 ? "When people enter this event they will appear here." : "Try another status tab.")</p></div>
+            }
+            else
+            {
+                <div class="table-responsive"><table class="rd-table">
+                    <thead><tr><th>Participant</th><th>Category</th><th>Entered</th><th>Bib</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+                    <tbody>
+                    @foreach (var e in shown)
+                    {
+                        <tr>
+                            <td><div class="row-title">@e.ParticipantName</div><div class="row-sub">@e.ParticipantEmail</div></td>
+                            <td>@e.CategoryName</td>
+                            <td>@Format.ShortDate(e.EnrolmentDate)</td>
+                            <td>@(e.BibNumber is { } b ? Html.Raw($"<span class=\"bib\">{b}</span>") : Html.Raw("-"))</td>
+                            <td><partial name="_StatusChip" model="e.Status" /></td>
+                            <td class="text-end text-nowrap">
+                                @if (e.Status == EnrolmentStatus.Pending)
+                                {
+                                    <form asp-action="SetStatus" method="post" class="d-inline">
+                                        <input type="hidden" name="eventId" value="@sel.EventId" /><input type="hidden" name="enrolmentId" value="@e.EnrolmentId" /><input type="hidden" name="status" value="Confirmed" />
+                                        <button class="btn btn-sm btn-primary" type="submit">Confirm</button>
+                                    </form>
+                                }
+                                @if (e.Status != EnrolmentStatus.Cancelled)
+                                {
+                                    <form asp-action="SetStatus" method="post" class="d-inline" data-confirm="Cancel the entry for @e.ParticipantName?" data-confirm-title="Cancel entry" data-confirm-ok="Cancel entry">
+                                        <input type="hidden" name="eventId" value="@sel.EventId" /><input type="hidden" name="enrolmentId" value="@e.EnrolmentId" /><input type="hidden" name="status" value="Cancelled" />
+                                        <button class="btn btn-sm btn-outline-primary" type="submit">Cancel</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    </tbody></table></div>
+            }
+        </div>
+    }
+</div>

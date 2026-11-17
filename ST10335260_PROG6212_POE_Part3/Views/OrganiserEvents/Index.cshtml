@@ -1,0 +1,46 @@
+@model List<EventSummary>
+@{
+    ViewData["Title"] = "My events";
+}
+<section class="page-head">
+    <div class="container d-flex flex-wrap justify-content-between align-items-end gap-3">
+        <div><h1>My events</h1><p class="sub">Create, edit and remove the events you organise.</p></div>
+        <a class="btn btn-volt" asp-action="Create"><i class="bi bi-plus-lg"></i> New event</a>
+    </div>
+</section>
+<div class="container page-body">
+    @if (Model.Count == 0)
+    {
+        <div class="rd-card empty-state">
+            <div class="art"><i class="bi bi-calendar-plus"></i></div>
+            <h3>No events yet</h3>
+            <p>Create your first event, then add categories so people can enter.</p>
+            <a class="btn btn-primary" asp-action="Create">Create event</a>
+        </div>
+    }
+    else
+    {
+        <div class="rd-card"><div class="table-responsive"><table class="rd-table">
+            <thead><tr><th>Event</th><th>Date</th><th>Distance</th><th>Categories</th><th>Entries</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+            @foreach (var e in Model.OrderByDescending(e => e.EventDate))
+            {
+                <tr>
+                    <td><div class="d-flex align-items-center gap-3"><div class="thumb ph-@Format.TypeClass(e.EventType)">@if (!string.IsNullOrEmpty(e.BannerUrl)) { <img src="@e.BannerUrl" alt="" onerror="this.remove()" /> } else { <i class="bi @Format.TypeIcon(e.EventType)"></i> }</div><div><a asp-controller="Events" asp-action="Details" asp-route-id="@e.EventId" class="row-title">@e.EventName</a><div class="row-sub">@e.Location</div></div></div></td>
+                    <td>@Format.ShortDate(e.EventDate)</td>
+                    <td>@Format.Distance(e.DistanceKm)</td>
+                    <td>@e.CategoryCount</td>
+                    <td>@e.EnrolmentCount</td>
+                    <td>@if (e.IsPast) { <span class="status-chip status-published">Completed</span> } else if (!e.IsActive) { <span class="status-chip status-hidden">Hidden</span> } else { <span class="status-chip status-confirmed">Live</span> }</td>
+                    <td class="text-end text-nowrap">
+                        <a class="btn btn-sm btn-soft" asp-controller="OrganiserCategories" asp-action="Index" asp-route-eventId="@e.EventId">Categories</a>
+                        <a class="btn btn-sm btn-dark" asp-action="Edit" asp-route-id="@e.EventId">Edit</a>
+                        <form asp-action="Delete" asp-route-id="@e.EventId" method="post" class="d-inline" data-confirm="Delete @e.EventName? This cannot be undone. Events that already have enrolments cannot be deleted." data-confirm-title="Delete event" data-confirm-ok="Delete event">
+                            <button class="btn btn-sm btn-outline-primary" type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody></table></div></div>
+    }
+</div>

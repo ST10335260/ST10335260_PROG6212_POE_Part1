@@ -1,0 +1,110 @@
+@model CategoriesPageViewModel
+@{
+    ViewData["Title"] = "Categories";
+    var sel = Model.Selected;
+}
+<section class="page-head">
+    <div class="container"><h1>Categories</h1><p class="sub">Choose which race categories each event offers, with its own fee and capacity.</p></div>
+</section>
+<div class="container page-body">
+    @if (sel is null)
+    {
+        <div class="rd-card empty-state">
+            <div class="art"><i class="bi bi-list-check"></i></div>
+            <h3>Create an event first</h3>
+            <p>Categories are added to your events, so you need at least one event.</p>
+            <a class="btn btn-primary" asp-controller="OrganiserEvents" asp-action="Create">Create event</a>
+        </div>
+    }
+    else
+    {
+        <div class="rd-card rd-card-pad mb-4">
+            <partial name="_EventPicker" model="@(new EventPickerViewModel { Events = Model.Events, SelectedId = sel.EventId, Controller = "OrganiserCategories", Action = "Index" })" />
+        </div>
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="rd-card">
+                    <div class="card-title-row"><h3>@sel.EventName</h3><span class="text-muted">@Model.EventCategories.Count assigned</span></div>
+                    @if (Model.EventCategories.Count == 0)
+                    {
+                        <div class="empty-state"><div class="art"><i class="bi bi-list-check"></i></div><h3>No categories on this event</h3><p>Add one from the panel on the right so participants can enter.</p></div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive"><table class="rd-table">
+                            <thead><tr><th>Category</th><th>Fee</th><th>Places</th><th class="text-end">Actions</th></tr></thead>
+                            <tbody>
+                            @foreach (var c in Model.EventCategories)
+                            {
+                                <tr>
+                                    <td><div class="row-title">@c.CategoryName</div><div class="row-sub">@Format.Distance(c.DefaultDistance)</div></td>
+                                    <td class="fw-bold">@Format.Money(c.EntryFee)</td>
+                                    <td><div class="spots @(c.SpotsLeft <= 0 ? "full" : "")"><span style="width:@(c.PercentFull)%"></span></div><div class="row-sub mt-1">@c.CurrentParticipants / @c.MaxParticipants entered</div></td>
+                                    <td class="text-end text-nowrap">
+                                        <button type="button" class="btn btn-sm btn-dark" data-bs-toggle="modal" data-bs-target="#editCategoryModal"
+                                                data-id="@c.EventCategoryId" data-category="@c.CategoryId" data-fee="@c.EntryFee.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)" data-max="@c.MaxParticipants" data-name="@c.CategoryName">Edit</button>
+                                        <form asp-action="Remove" method="post" class="d-inline" data-confirm="Remove @c.CategoryName from this event? This is blocked if people have already entered." data-confirm-title="Remove category" data-confirm-ok="Remove">
+                                            <input type="hidden" name="eventId" value="@sel.EventId" />
+                                            <input type="hidden" name="eventCategoryId" value="@c.EventCategoryId" />
+                                            <button class="btn btn-sm btn-outline-primary" type="submit">Remove</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                            </tbody></table></div>
+                    }
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="rd-card rd-card-pad mb-4">
+                    <h4>Add to this event</h4>
+                    @if (Model.AvailableCategories.Count == 0)
+                    {
+                        <p class="text-muted mb-0">Every category is already on this event. Create a new one below.</p>
+                    }
+                    else
+                    {
+                        <form asp-action="Add" method="post" novalidate>
+                            <input type="hidden" name="EventId" value="@sel.EventId" />
+                            <div class="mb-3"><label class="form-label" for="addCat">Category</label>
+                                <select class="form-select" id="addCat" name="CategoryId">
+                                    @foreach (var c in Model.AvailableCategories) { <option value="@c.CategoryId">@c.CategoryName @(c.DefaultDistance is { } d ? $"({Format.Distance(d)})" : "")</option> }
+                                </select></div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-6"><label class="form-label" for="addFee">Entry fee (R)</label><input class="form-control" id="addFee" name="EntryFee" type="number" min="0" step="0.01" value="150" /></div>
+                                <div class="col-6"><label class="form-label" for="addMax">Max places</label><input class="form-control" id="addMax" name="MaxParticipants" type="number" min="1" value="100" /></div>
+                            </div>
+                            <button class="btn btn-primary w-100" type="submit" data-loading="Adding">Add category</button>
+                        </form>
+                    }
+                </div>
+                <div class="rd-card rd-card-pad">
+                    <h4>Create a new category</h4>
+                    <form asp-action="Create" method="post" novalidate>
+                        <input type="hidden" name="EventId" value="@sel.EventId" />
+                        <div class="mb-3"><label class="form-label" for="newName">Name</label><input class="form-control" id="newName" name="CategoryName" placeholder="e.g. 42.2km Marathon" required /></div>
+                        <div class="mb-3"><label class="form-label" for="newDist">Distance (km)</label><input class="form-control" id="newDist" name="DefaultDistance" type="number" step="0.1" min="0.1" /></div>
+                        <div class="mb-3"><label class="form-label" for="newDesc">Description</label><input class="form-control" id="newDesc" name="Description" /></div>
+                        <button class="btn btn-dark w-100" type="submit" data-loading="Creating">Create category</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="editCategoryModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <form class="modal-content" asp-action="Update" method="post" novalidate>
+                    <div class="modal-header"><h4 class="modal-title">Edit <span data-category-name></span></h4><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+                    <div class="modal-body">
+                        <input type="hidden" name="EventId" value="@sel.EventId" />
+                        <input type="hidden" name="EventCategoryId" />
+                        <input type="hidden" name="CategoryId" />
+                        <div class="mb-3"><label class="form-label">Entry fee (R)</label><input class="form-control" name="EntryFee" type="number" min="0" step="0.01" required /></div>
+                        <div><label class="form-label">Maximum participants</label><input class="form-control" name="MaxParticipants" type="number" min="1" required /></div>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-soft" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary" type="submit">Save</button></div>
+                </form>
+            </div>
+        </div>
+    }
+</div>

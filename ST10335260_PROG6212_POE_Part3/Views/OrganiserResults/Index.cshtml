@@ -1,0 +1,69 @@
+@model ResultsPageViewModel
+@{
+    ViewData["Title"] = "Results";
+    var sel = Model.Selected;
+}
+<section class="page-head">
+    <div class="container"><h1>Results</h1><p class="sub">Capture finish times for confirmed participants. Tick Published to show a result to participants.</p></div>
+</section>
+<div class="container page-body">
+    @if (sel is null)
+    {
+        <div class="rd-card empty-state"><div class="art"><i class="bi bi-trophy"></i></div><h3>No events yet</h3><p>Create an event and confirm entries before capturing results.</p><a class="btn btn-primary" asp-controller="OrganiserEvents" asp-action="Create">Create event</a></div>
+    }
+    else
+    {
+        <div class="rd-card rd-card-pad mb-4"><partial name="_EventPicker" model="@(new EventPickerViewModel { Events = Model.Events, SelectedId = sel.EventId, Controller = "OrganiserResults", Action = "Index" })" /></div>
+        <div class="rd-card">
+            @if (Model.Enrolments.Count == 0)
+            {
+                <div class="empty-state"><div class="art"><i class="bi bi-stopwatch"></i></div><h3>No confirmed participants</h3><p>Results can only be captured for confirmed entries. Confirm some on the Enrolments page.</p><a class="btn btn-primary" asp-controller="OrganiserEnrolments" asp-action="Index" asp-route-eventId="@sel.EventId">Go to enrolments</a></div>
+            }
+            else
+            {
+                <div class="table-responsive"><table class="rd-table">
+                    <thead><tr><th>Participant</th><th>Bib</th><th>Category</th><th>Time</th><th>Position</th><th>Pace</th><th>Status</th><th class="text-end">Action</th></tr></thead>
+                    <tbody>
+                    @foreach (var e in Model.Enrolments.OrderBy(e => e.Result == null ? int.MaxValue : e.Result.Position))
+                    {
+                        var r = e.Result;
+                        <tr>
+                            <td class="row-title">@e.ParticipantName</td>
+                            <td>@(e.BibNumber is { } b ? Html.Raw($"<span class=\"bib\">{b}</span>") : Html.Raw("-"))</td>
+                            <td>@e.CategoryName</td>
+                            <td class="fw-bold">@(r is null ? "-" : Format.FinishTime(r.FinishTime))</td>
+                            <td>@(r is null ? "-" : Format.Ordinal(r.Position))</td>
+                            <td>@(r is null ? "-" : Format.Pace(r.PacePerKm))</td>
+                            <td>@if (r is null) { <span class="status-chip status-draft">No result</span> } else if (r.Verified) { <span class="status-chip status-published">Published</span> } else { <span class="status-chip status-pending">Draft</span> }</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm @(r is null ? "btn-primary" : "btn-dark")" data-bs-toggle="modal" data-bs-target="#resultModal"
+                                        data-enrolment="@e.EnrolmentId" data-result="@(r?.ResultId ?? 0)" data-time="@(r is null ? "" : Format.FinishTime(r.FinishTime))" data-position="@(r?.Position)" data-verified="@(r?.Verified == true ? "true" : "false")"
+                                        data-name="@e.ParticipantName" data-bib="@e.BibNumber">@(r is null ? "Add result" : "Edit")</button>
+                            </td>
+                        </tr>
+                    }
+                    </tbody></table></div>
+            }
+        </div>
+
+        <div class="modal fade" id="resultModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <form class="modal-content" asp-action="Save" method="post" novalidate>
+                    <div class="modal-header"><h4 class="modal-title"><span data-participant></span> <span class="bib" data-bib></span></h4><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+                    <div class="modal-body">
+                        <input type="hidden" name="EventId" value="@sel.EventId" />
+                        <input type="hidden" name="EnrolmentId" />
+                        <input type="hidden" name="ResultId" value="0" />
+                        <div class="mb-3"><label class="form-label">Finish time (hh:mm:ss)</label><input class="form-control" name="FinishTime" placeholder="00:52:30" pattern="\d{1,2}:[0-5]\d:[0-5]\d" required /></div>
+                        <div class="mb-3"><label class="form-label">Position</label><input class="form-control" name="Position" type="number" min="1" required /></div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="verifiedSwitch" name="Verified" value="true" />
+                            <label class="form-check-label" for="verifiedSwitch">Published (visible to participants)</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-soft" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary" type="submit">Save result</button></div>
+                </form>
+            </div>
+        </div>
+    }
+</div>
