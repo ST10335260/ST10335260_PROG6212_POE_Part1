@@ -97,6 +97,10 @@ namespace ST10335260_PROG6212_POE_Part2.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EventId"));
 
+                    b.Property<string>("BannerUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -185,13 +189,13 @@ namespace ST10335260_PROG6212_POE_Part2.Migrations
                     b.Property<TimeSpan>("FinishTime")
                         .HasColumnType("time");
 
-                    b.Property<int?>("OverallRank")
+                    b.Property<int>("OverallRank")
                         .HasColumnType("int");
 
                     b.Property<decimal?>("PacePerKm")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int?>("Position")
+                    b.Property<int>("Position")
                         .HasColumnType("int");
 
                     b.Property<bool>("Verified")
@@ -271,6 +275,10 @@ namespace ST10335260_PROG6212_POE_Part2.Migrations
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ProfilePictureUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("RoleId")
                         .HasColumnType("int");
