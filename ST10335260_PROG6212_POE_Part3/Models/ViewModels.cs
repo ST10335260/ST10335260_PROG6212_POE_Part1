@@ -160,14 +160,26 @@ public class AddEventCategoryForm
 {
     public int EventId { get; set; }
 
-    [Range(1, int.MaxValue, ErrorMessage = "Choose a category.")]
-    public int CategoryId { get; set; }
+    public string Mode { get; set; } = "existing";
 
+    public int? CategoryId { get; set; }
+
+    [StringLength(100, ErrorMessage = "The category name must be 100 characters or fewer.")]
+    public string? NewCategoryName { get; set; }
+
+    [StringLength(500, ErrorMessage = "The description must be 500 characters or fewer.")]
+    public string? NewDescription { get; set; }
+
+    [Range(0.1, 1000, ErrorMessage = "Distance must be between 0.1 and 1000 km.")]
+    public decimal? NewDistance { get; set; }
+
+    [Required(ErrorMessage = "Enter the entry fee for this category.")]
     [Range(0, 100000, ErrorMessage = "Entry fee must be between R0 and R100 000.")]
-    public decimal EntryFee { get; set; }
+    public decimal? EntryFee { get; set; }
 
+    [Required(ErrorMessage = "Enter the maximum number of participants.")]
     [Range(1, 100000, ErrorMessage = "Maximum participants must be at least 1.")]
-    public int MaxParticipants { get; set; } = 100;
+    public int? MaxParticipants { get; set; }
 }
 
 public class EditEventCategoryForm
@@ -181,20 +193,6 @@ public class EditEventCategoryForm
 
     [Range(1, 100000, ErrorMessage = "Maximum participants must be at least 1.")]
     public int MaxParticipants { get; set; }
-}
-
-public class NewCategoryForm
-{
-    public int EventId { get; set; }
-
-    [Required(ErrorMessage = "Give the category a name."), StringLength(100)]
-    public string CategoryName { get; set; } = string.Empty;
-
-    [StringLength(500)]
-    public string? Description { get; set; }
-
-    [Range(0.1, 1000, ErrorMessage = "Distance must be between 0.1 and 1000 km.")]
-    public decimal? DefaultDistance { get; set; }
 }
 
 public class CategoriesPageViewModel
