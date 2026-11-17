@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -37,5 +37,46 @@ public class RoleEnforcementTests
         attribute.OnAuthorization(filterContext);
 
         Assert.IsType<UnauthorizedObjectResult>(filterContext.Result);
+    }
+
+    private static AuthorizationFilterContext NewFilterContext(int? userId, string? role)
+    {
+        var httpContext = new DefaultHttpContext { Session = new TestSession() };
+        if (userId.HasValue) httpContext.Session.SetInt32("UserId", userId.Value);
+        if (role is not null) httpContext.Session.SetString("Role", role);
+
+        return new AuthorizationFilterContext(
+            new ActionContext(httpContext, new Microsoft.AspNetCore.Routing.RouteData(), new ActionDescriptor()),
+            new List<IFilterMetadata>());
+    }
+
+    [Fact]
+    public void OrganiserRole_IsAllowed_ToOrganiserOnlyAction()
+    {
+        var filterContext = NewFilterContext(1, "Organiser");
+
+        new RequireRoleAttribute("Organiser").OnAuthorization(filterContext);
+
+        Assert.Null(filterContext.Result);
+    }
+
+    [Fact]
+    public void RequireAuth_WithoutSession_ReturnsUnauthorized()
+    {
+        var filterContext = NewFilterContext(null, null);
+
+        new RequireAuthAttribute().OnAuthorization(filterContext);
+
+        Assert.IsType<UnauthorizedObjectResult>(filterContext.Result);
+    }
+
+    [Fact]
+    public void RequireAuth_WithActiveSession_AllowsRequest()
+    {
+        var filterContext = NewFilterContext(3, "Participant");
+
+        new RequireAuthAttribute().OnAuthorization(filterContext);
+
+        Assert.Null(filterContext.Result);
     }
 }

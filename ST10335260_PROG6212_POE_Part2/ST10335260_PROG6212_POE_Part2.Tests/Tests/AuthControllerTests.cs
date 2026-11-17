@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ST10335260_PROG6212_POE_Part2.Controllers;
 using ST10335260_PROG6212_POE_Part2.Data;
 using ST10335260_PROG6212_POE_Part2.DTOs;
@@ -87,5 +87,96 @@ public class AuthControllerTests
 
         var result = await controller.Login(new LoginDto { Email = "a@b.com", Password = "wrong" });
         Assert.IsType<UnauthorizedObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task Login_WithValidCredentials_StoresUserIdAndRoleInSession()
+    {
+        var context = GetContext();
+        var user = new User
+        {
+            Email = "ok@test.com",
+            PasswordHash = ST10335260_PROG6212_POE_Part2.Services.PasswordHasher.Hash("Secret123"),
+            RoleId = 1
+        };
+        context.Users.Add(user);
+        context.SaveChanges();
+
+        var session = new TestSession();
+        var controller = new AuthController(context)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { Session = session }
+            }
+        };
+
+        var result = await controller.Login(new LoginDto { Email = "ok@test.com", Password = "Secret123" });
+
+        Assert.IsType<OkObjectResult>(result);
+        Assert.Equal(user.UserId, session.GetInt32("UserId"));
+        Assert.Equal("Organiser", session.GetString("Role"));
+    }
+
+    [Fact]
+    public void Logout_ClearsTheSession()
+    {
+        var context = GetContext();
+        var session = new TestSession();
+        session.SetInt32("UserId", 7);
+        session.SetString("Role", "Participant");
+
+        var controller = new AuthController(context)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { Session = session }
+            }
+        };
+
+        var result = controller.Logout();
+
+        Assert.IsType<OkObjectResult>(result);
+        Assert.Null(session.GetInt32("UserId"));
+        Assert.Null(session.GetString("Role"));
+    }
+
+    [Fact]
+    public async Task Register_WithUnknownRole_ReturnsBadRequest()
+    {
+        var context = GetContext();
+        var controller = new AuthController(context);
+
+        var result = await controller.Register(new RegisterDto
+        {
+            Email = "new@test.com",
+            Password = "Password123",
+            FirstName = "New",
+            LastName = "User",
+            DateOfBirth = new DateTime(1999, 5, 5),
+            Role = "Admin"
+        });
+
+        Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Empty(context.Users);
+    }
+
+    [Fact]
+    public async Task Register_WithFutureDateOfBirth_ReturnsBadRequest()
+    {
+        var context = GetContext();
+        var controller = new AuthController(context);
+
+        var result = await controller.Register(new RegisterDto
+        {
+            Email = "future@test.com",
+            Password = "Password123",
+            FirstName = "Future",
+            LastName = "Person",
+            DateOfBirth = DateTime.UtcNow.AddYears(1),
+            Role = "Participant"
+        });
+
+        Assert.IsType<BadRequestObjectResult>(result);
     }
 }
