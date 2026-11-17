@@ -193,6 +193,7 @@ Two GitHub Actions workflows run on every push.
 - **Build and Test** restores and builds the API and test project, runs the unit tests, then builds the MVC application.
 
 ![GitHub Actions run passing](docs/Part3_CI_Success.png)
+![All workflows passing](docs/Part3_CI_Workflows.png)
 
 ## 14. Video walkthrough
 
