@@ -1,4 +1,4 @@
-﻿namespace ST10335260_PROG6212_POE_Part2.Models;
+namespace ST10335260_PROG6212_POE_Part2.Models;
 
 public enum EventType { Run, Walk, Cycle }
 
@@ -13,6 +13,7 @@ public class Event
     public string Location { get; set; } = string.Empty;
     public decimal? DistanceKm { get; set; }
     public EventType EventType { get; set; }
+    public string? BannerUrl { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

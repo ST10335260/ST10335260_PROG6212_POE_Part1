@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ST10335260_PROG6212_POE_Part2.Models;
 
 namespace ST10335260_PROG6212_POE_Part2.Data;
@@ -20,6 +20,12 @@ public class RaceDayDbContext : DbContext
     {
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Email).IsUnique();
+
+        modelBuilder.Entity<Event>()
+            .Property(e => e.BannerUrl).HasMaxLength(500);
+
+        modelBuilder.Entity<User>()
+            .Property(u => u.ProfilePictureUrl).HasMaxLength(500);
 
         modelBuilder.Entity<Role>().HasData(
             new Role { RoleId = 1, RoleName = "Organiser", Description = "Creates and manages events, categories and results" },
