@@ -1,6 +1,6 @@
 # RaceDay Event Management System
 
-**Module:** PROG6212 Programming 2B | **Assessment:** POE Part 2 (RESTful API Development)
+**Module:** PROG6212 Programming 2B | **Assessment:** POE Part 3 (MVC front end, Azure Blob storage with Azurite, Docker and CI)
 **Student:** Reesaido Alagiry | **Student number:** ST10335260
 
 ## Contents
@@ -8,35 +8,39 @@
 1. [Project description](#1-project-description)
 2. [Technology stack](#2-technology-stack)
 3. [Repository structure](#3-repository-structure)
-4. [Setup and run instructions](#4-setup-and-run-instructions)
-5. [User roles and authentication](#5-user-roles-and-authentication)
-6. [API endpoints](#6-api-endpoints)
-7. [Example requests](#7-example-requests)
-8. [Design decisions](#8-design-decisions)
-9. [Unit tests](#9-unit-tests)
-10. [Continuous integration](#10-continuous-integration)
-11. [Video walkthrough](#11-video-walkthrough)
-12. [Part 1 summary](#12-part-1-summary)
-13. [Reference list](#13-reference-list)
+4. [Run with Docker (one command)](#4-run-with-docker-one-command)
+5. [Run locally in Visual Studio](#5-run-locally-in-visual-studio)
+6. [Demo accounts and seed data](#6-demo-accounts-and-seed-data)
+7. [User roles, authentication and navigation](#7-user-roles-authentication-and-navigation)
+8. [Pages in the MVC application](#8-pages-in-the-mvc-application)
+9. [Image storage with Azurite](#9-image-storage-with-azurite)
+10. [API endpoints](#10-api-endpoints)
+11. [Design decisions](#11-design-decisions)
+12. [Unit tests](#12-unit-tests)
+13. [Continuous integration](#13-continuous-integration)
+14. [Video walkthrough](#14-video-walkthrough)
+15. [Part 1 and Part 2 summary](#15-part-1-and-part-2-summary)
+16. [Reference list](#16-reference-list)
 
 ## 1. Project description
 
-RaceDay is an event management system for South African road running, walking and cycling events. Part 1 planned the system and built the SQL database. Part 2, documented here, is the working RESTful API built on that design.
+RaceDay is an event management system for South African road running, walking and cycling events. Part 1 planned the system and built the SQL database design. Part 2 built the RESTful API. Part 3, documented here, adds an ASP.NET Core MVC web application that consumes that API, stores uploaded images in Azure Blob storage (emulated locally with Azurite), and packages everything in Docker containers.
 
-Event Organisers create and manage events, attach race categories (for example 5km or 10km) to an event, and capture results. Participants browse events, enrol in a category, receive a bib number and view their own enrolments and results. The API follows the conventions for ASP.NET Core web APIs, using attribute-routed controllers with the `[ApiController]` attribute (Microsoft, 2026a).
+There are two roles. Organisers create events, attach race categories, confirm enrolments and capture results. Participants browse and filter upcoming events, enter a category, manage their enrolments, view published results and keep a profile with a profile picture.
 
-![Swagger UI showing the RaceDay API](docs/Part2_Swagger.png)
+The MVC application contains no database code and no business rules. Every action calls the Web API over HTTP, and the API remains the single source of truth (Microsoft, 2026a).
 
 ## 2. Technology stack
 
 | Area | Choice |
 |---|---|
-| Framework | ASP.NET Core Web API on .NET 10 (C#) |
-| Data access | Entity Framework Core 10, Code-First with migrations (Microsoft, 2026d) |
-| Database | SQL Server Express (`localhost\SQLEXPRESS`), database `RaceDayApi` |
-| Authentication | Session based, with role checks in authorization filters (Microsoft, 2026c; Microsoft, 2026e) |
-| Password hashing | BCrypt.Net-Next 4.2.0 (McKee, Emerl and Miller, n.d.) |
-| API documentation | Swashbuckle (Swagger UI) with XML comments (Microsoft, 2025) |
+| Front end | ASP.NET Core MVC (Razor views) on .NET 10, Bootstrap 5.3 and Bootstrap Icons (Bootstrap, 2024) |
+| API | ASP.NET Core Web API on .NET 10 (C#) |
+| Data access | Entity Framework Core 10, Code-First with migrations (Microsoft, 2026c) |
+| Database | SQL Server (local: SQL Server Express, Docker: SQL Server 2022 container) |
+| Authentication | Server-side sessions; the MVC application forwards the API session cookie (Microsoft, 2026d) |
+| Image storage | Azure Blob Storage through the `Azure.Storage.Blobs` SDK, emulated by Azurite (Microsoft, 2026e) |
+| Containers | Docker and Docker Compose (Docker, 2026) |
 | Unit testing | xUnit with the EF Core in-memory provider (xUnit.net, n.d.; Microsoft, 2023) |
 | CI | GitHub Actions (GitHub, n.d.) |
 
@@ -45,269 +49,184 @@ Event Organisers create and manage events, attach race categories (for example 5
 ```
 ST10335260_PROG6212_POE_Part1/
 |-- .github/workflows/
-|   |-- build-and-test.yml            Part 2 CI: build and run unit tests
-|   |-- validate-structure.yml        Part 1 CI: check planning files exist
-|-- docs/                             Part 1 planning files and screenshots
+|   |-- build-and-test.yml                   CI: build API, run unit tests, build MVC
+|   |-- validate-structure.yml               CI: check repository structure
+|-- docs/                                    Planning files, screenshots, sample images
 |-- ST10335260_PROG6212_POE_Part2/
-|   |-- ST10335260_PROG6212_POE_Part2/          The API project
-|   |   |-- Controllers/                Auth, Users, Events, Categories, Enrolments, Results
-|   |   |-- Data/                       RaceDayDbContext
-|   |   |-- DTOs/                       Register and login requests
-|   |   |-- Filters/                    RequireAuth and RequireRole attributes
-|   |   |-- Migrations/                 EF Core migrations
-|   |   |-- Models/                     Entities
-|   |   |-- Services/                   PasswordHasher
-|   |   |-- Program.cs
-|   |   |-- appsettings.json
-|   |-- ST10335260_PROG6212_POE_Part2.Tests/    xUnit test project
+|   |-- ST10335260_PROG6212_POE_Part2/       Web API project (with Dockerfile)
+|   |-- ST10335260_PROG6212_POE_Part2.Tests/ xUnit test project
+|   |-- ST10335260_PROG6212_POE_Part2.slnx   Solution (API, tests and MVC)
+|-- ST10335260_PROG6212_POE_Part3/           MVC front end (with Dockerfile)
+|   |-- Controllers/ Views/ Models/ Services/ Filters/ Helpers/ wwwroot/
+|-- docker-compose.yml                       SQL Server, Azurite, API and MVC
 |-- README.md
 ```
 
-## 4. Setup and run instructions
+## 4. Run with Docker (one command)
 
-### Prerequisites
+Prerequisite: Docker Desktop is installed and running. From the repository root (the folder that contains `docker-compose.yml`), run:
 
-- .NET 10 SDK
-- SQL Server Express running as `localhost\SQLEXPRESS` (SQL Server Management Studio is optional)
-- Visual Studio 2022 or later, or the .NET command line
-- EF Core command line tool, if you are not using Visual Studio: `dotnet tool install --global dotnet-ef`
-
-### Steps
-
-1. **Clone the repository**
-
-   ```
-   git clone https://github.com/ST10335260/ST10335260_PROG6212_POE_Part1.git
-   cd ST10335260_PROG6212_POE_Part1/ST10335260_PROG6212_POE_Part2/ST10335260_PROG6212_POE_Part2
-   ```
-
-2. **Check the connection string** in `appsettings.json`. The default uses Windows authentication on SQL Server Express:
-
-   ```
-   Server=localhost\SQLEXPRESS;Database=RaceDayApi;Trusted_Connection=True;TrustServerCertificate=True;
-   ```
-
-   Change the server name if your instance is named differently.
-
-3. **Create the database.** From the API project folder run:
-
-   ```
-   dotnet ef database update
-   ```
-
-   In Visual Studio, use Package Manager Console instead, with the API project as the default project: `Update-Database`. This creates the `RaceDayApi` database with all 8 tables and seeds the two roles, Organiser and Participant (Microsoft, 2026b).
-
-4. **Add the reference categories.** The API reads categories but does not create them, so insert them once in SQL Server Management Studio, with `RaceDayApi` selected:
-
-   ```sql
-   INSERT INTO Categories (CategoryName, Description, DefaultDistance, CreatedAt)
-   VALUES
-   ('5km Fun Run', 'Beginner friendly 5km', 5, GETUTCDATE()),
-   ('10km Road Run', 'Standard 10km road race', 10, GETUTCDATE()),
-   ('21.1km Half Marathon', 'Half marathon distance', 21.1, GETUTCDATE());
-   ```
-
-5. **Run the API**
-
-   ```
-   dotnet dev-certs https --trust
-   dotnet run --launch-profile https
-   ```
-
-   In Visual Studio, choose the `https` profile and press F5.
-
-6. **Open Swagger UI** at <https://localhost:7122/swagger>. Swagger is enabled in the Development environment only. Log in through Swagger and the browser keeps the session cookie, so later requests in the same tab are authenticated.
-
-7. **Run the unit tests.** From the `ST10335260_PROG6212_POE_Part2.Tests` folder:
-
-   ```
-   dotnet test
-   ```
-
-## 5. User roles and authentication
-
-| | Organiser | Participant |
-|---|---|---|
-| Purpose | Creates and manages events, categories and results | Browses events, enrols and views own data |
-| Create, update, delete events | Yes (own events only for update and delete) | No (403) |
-| Attach or change categories on an event | Yes | No (403) |
-| Capture and update results | Yes | No (403) |
-| View enrolments for a category | Yes | No (403) |
-| Enrol in or cancel an enrolment | No (403) | Yes (own enrolments only) |
-| View own profile, enrolments and results | Yes | Yes |
-| Browse events, categories and leaderboards | Yes | Yes |
-
-**How authentication works**
-
-- A user registers with a role (`Organiser` or `Participant`). The password is hashed with BCrypt before it is stored, and the plain text password is never saved.
-- On login the API stores the user id and role in the server-side session. The session cookie is HttpOnly and expires after 30 minutes of inactivity (Microsoft, 2026e).
-- Two custom authorization filters protect endpoints. `RequireAuth` rejects requests with no session. `RequireRole("Organiser")` and `RequireRole("Participant")` also check the role. Filters run before the action method, so a rejected request never reaches the controller code (Microsoft, 2026c).
-- Status codes follow HTTP semantics (Fielding, Nottingham and Reschke, 2022): `401` not logged in, `403` logged in with the wrong role, `404` not found, `409` conflict such as a duplicate email or enrolment.
-
-## 6. API endpoints
-
-**Auth**
-
-| Method | Route | Access | Result |
-|---|---|---|---|
-| POST | `/api/auth/register` | Public | 201, or 409 if the email exists, 400 if the role is invalid |
-| POST | `/api/auth/login` | Public | 200, or 401 for wrong credentials |
-| POST | `/api/auth/logout` | Public | 200, clears the session |
-
-**Users**
-
-| Method | Route | Access | Result |
-|---|---|---|---|
-| GET | `/api/users/me` | Logged in | Own profile |
-| PUT | `/api/users/me` | Logged in | Update own profile |
-
-**Events**
-
-| Method | Route | Access | Result |
-|---|---|---|---|
-| GET | `/api/events` | Public | List of active events |
-| GET | `/api/events/{id}` | Public | One event, or 404 |
-| POST | `/api/events` | Organiser | 201, owner set from the session |
-| PUT | `/api/events/{id}` | Organiser (owner) | 200, or 403 if not the owner |
-| DELETE | `/api/events/{id}` | Organiser (owner) | 204, or 403 if not the owner |
-
-**Categories**
-
-| Method | Route | Access | Result |
-|---|---|---|---|
-| GET | `/api/categories` | Public | All categories |
-| GET | `/api/events/{eventId}/categories` | Public | Categories attached to an event |
-| POST | `/api/events/{eventId}/categories` | Organiser | 201, sets entry fee and participant limit |
-| PUT | `/api/event-categories/{id}` | Organiser | 200, updates fee and limit |
-| DELETE | `/api/event-categories/{id}` | Organiser | 204 |
-
-**Enrolments**
-
-| Method | Route | Access | Result |
-|---|---|---|---|
-| POST | `/api/event-categories/{id}/enrolments` | Participant | 201 with a bib number, or 409 if already enrolled or full |
-| GET | `/api/users/me/enrolments` | Logged in | Own enrolments |
-| GET | `/api/event-categories/{id}/enrolments` | Organiser | Enrolments for a category |
-| DELETE | `/api/enrolments/{id}` | Participant (owner) | 204, or 403 if not the owner |
-
-**Results**
-
-| Method | Route | Access | Result |
-|---|---|---|---|
-| POST | `/api/results` | Organiser | 201 |
-| GET | `/api/event-categories/{id}/results` | Public | Leaderboard ordered by position |
-| GET | `/api/users/me/results` | Logged in | Own results |
-| PUT | `/api/results/{id}` | Organiser | 200, updates finish time and position |
-
-## 7. Example requests
-
-**Register** (`POST /api/auth/register`)
-
-```json
-{
-  "email": "organiser@test.com",
-  "password": "Test1234",
-  "firstName": "Olivia",
-  "lastName": "Organiser",
-  "dateOfBirth": "1990-03-02T00:00:00Z",
-  "role": "Organiser"
-}
+```
+docker compose up --build
 ```
 
-**Create an event** (`POST /api/events`, logged in as an Organiser). `eventType` is a number: 0 Run, 1 Walk, 2 Cycle.
+The first build downloads images and can take several minutes. When the logs show that the API and web containers are listening, open:
 
-```json
-{
-  "eventName": "Cape Town Fun Run 2026",
-  "description": "Scenic 10km road run along the Sea Point promenade",
-  "eventDate": "2026-12-05T06:30:00Z",
-  "location": "Sea Point, Cape Town",
-  "distanceKm": 10,
-  "eventType": 0,
-  "isActive": true
-}
-```
-
-**Attach a category** (`POST /api/events/1/categories`)
-
-```json
-{
-  "categoryId": 2,
-  "entryFee": 150,
-  "maxParticipants": 100
-}
-```
-
-## 8. Design decisions
-
-- **EventType added to Events.** The Part 2 brief requires each event to be a run, walk or cycle, which was not in the Part 1 ERD. The `Events` entity therefore has an `EventType` field (an enumeration with Run, Walk and Cycle). This is a deliberate change from the Part 1 design, and the Part 1 `RaceDay` database was left untouched.
-- **Separate database.** The API uses a new database, `RaceDayApi`, created entirely by EF Core migrations, so the schema in the code and the database always match (Microsoft, 2026d).
-- **Seeded roles.** The Organiser and Participant roles are seeded through the migration, so a new database can register users without manual SQL (Microsoft, 2026b).
-- **Restricted cascade deletes.** SQL Server rejected the first migration because deleting an event or user could reach enrolments through more than one path (error 1785, multiple cascade paths). The foreign keys on enrolments and the event organiser use restricted deletes, so records are not removed silently (Microsoft, 2021).
-- **Business rules in the API.** Enrolment checks for a duplicate enrolment and for a full category, and then assigns a bib number. A unique index on participant and event category also enforces the duplicate rule in the database.
-- **Ownership checks.** An Organiser can only update or delete their own events, and a Participant can only cancel their own enrolments.
-
-**Known limitations**
-
-- Categories are inserted with SQL because the plan did not include an endpoint to create them.
-- Sessions are held in server memory, so users must log in again after the API restarts.
-
-## 9. Unit tests
-
-The test project uses xUnit with the EF Core in-memory provider, so the tests run without SQL Server (xUnit.net, n.d.; Microsoft, 2023). A small fake session class lets the controllers and filters be tested without a running web server.
-
-| Test class | What it checks |
+| Service | Address |
 |---|---|
-| `AuthControllerTests` | Valid registration creates a user, a duplicate email returns a conflict, a wrong password returns unauthorized |
-| `RoleEnforcementTests` | A Participant is rejected with 403 on an Organiser-only action, and a request with no session is rejected as unauthorized |
-| `EnrolmentsControllerTests` | Enrolling in a full category and enrolling twice both return a conflict |
+| MVC web application | <http://localhost:8080> |
+| Web API with Swagger UI | <http://localhost:5223/swagger> |
+| Azurite blob endpoint | <http://localhost:10000/devstoreaccount1> |
 
-All 7 tests pass:
+The API applies the database migrations and seeds the demo data on start-up, so no manual database setup is needed. To stop the containers use `docker compose down`. To also remove the stored data use `docker compose down -v`.
 
-![Test Explorer showing 7 passing tests](docs/Part2_Tests_Passing.png)
+## 5. Run locally in Visual Studio
 
-## 10. Continuous integration
+1. Install Visual Studio with the ASP.NET and web development workload, the .NET 10 SDK, SQL Server Express and Node.js (for Azurite).
+2. Start Azurite in a terminal: `npx azurite-blob --skipApiVersionCheck --loose`. Leave it running.
+3. Open `ST10335260_PROG6212_POE_Part2/ST10335260_PROG6212_POE_Part2.slnx`.
+4. Right-click the solution, choose **Configure Startup Projects**, select **Multiple startup projects** and set both `ST10335260_PROG6212_POE_Part2` (the API) and `ST10335260_PROG6212_POE_Part3` (the MVC application) to **Start**.
+5. Press F5. The API listens on `http://localhost:5223` and the MVC application on `http://localhost:5290`. The MVC application reads the API address from `ApiSettings:BaseUrl` in its `appsettings.json`.
+6. The API creates the `RaceDayApi` database on `localhost\SQLEXPRESS` and seeds the demo data on first start. To apply migrations manually, run `dotnet ef database update` in the API project folder.
 
-The workflow `.github/workflows/build-and-test.yml` runs on every push and on pull requests to `main`. It sets up the .NET SDK, restores packages, builds the test project (which builds the API project too) and runs all unit tests (GitHub, n.d.).
+## 6. Demo accounts and seed data
 
-![GitHub Actions run passing](docs/Part2_CI_Success.png)
+The three race categories (5km Fun Run, 10km Road Run and 21.1km Half Marathon) are created whenever the category table is empty. Optional demo data is created when `Seed:DemoData` is `true` (the Docker setup turns it on): four events (three upcoming and one finished with published results), enrolments and results. The application does not depend on this data. With an empty database every page shows a helpful empty state.
 
-## 11. Video walkthrough
+| Role | Email | Password |
+|---|---|---|
+| Organiser | organiser@raceday.demo | Password123! |
+| Participant | thandi@raceday.demo | Password123! |
+| Participant | sipho@raceday.demo | Password123! |
 
-Unlisted YouTube video showing the API running in Swagger UI, the two roles, the role checks, and the code structure: <https://youtu.be/-yi8OkdGL4E>
+## 7. User roles, authentication and navigation
 
-## 12. Part 1 summary
+- Registration lets the person choose Participant or Organiser. Passwords are hashed with BCrypt in the API and never stored in plain text.
+- After login the MVC application stores the user in its own session and forwards the API session cookie on every call. The MVC session cookie (`RaceDay.Web.Session`) has a different name from the API cookie so the two do not clash on `localhost`.
+- A `SessionAuthorize` filter protects every private page (Microsoft, 2026b). A visitor who is not logged in is sent to the login page and returned to the requested page afterwards. A logged-in user of the wrong role sees an access denied page.
+- The navigation bar is role based. Visitors see the public event list. Participants see Discover, My enrolments and My results. Organisers see Dashboard, Events, Categories, Enrolments and Results. Both roles have a profile menu with a log out button.
+- Forms use anti-forgery tokens, input is validated on the server, and API errors are shown as friendly messages instead of raw error pages (Microsoft, 2026f).
 
-Part 1 covered the planning and the SQL database design: the ERD with 8 entities, the API endpoint plan and the SQL script.
+## 8. Pages in the MVC application
+
+**Public and participant**
+
+| Page | Purpose |
+|---|---|
+| Home / Discover | Upcoming events with filters for search, location, type, distance and date |
+| Event details | Description, facts, categories with entry fee and places left, enrol button, results for finished events |
+| My enrolments | Entries with colour-coded status (green Confirmed, amber Pending, grey Cancelled), bib number and cancel |
+| My results | Published finish time, pace and rank for finished events |
+| Profile | Edit details and upload a profile picture |
+
+**Organiser**
+
+| Page | Purpose |
+|---|---|
+| Dashboard | Totals for events, upcoming events, enrolments, pending entries and published results |
+| Events | Create, edit and delete events, including a banner image upload |
+| Categories | Add categories to an event with fee and capacity, edit them, remove them, or create new categories |
+| Enrolments | Filter by status, confirm or cancel entries |
+| Results | Capture finish time and position per confirmed participant and publish them |
+
+## 9. Image storage with Azurite
+
+Event banners and profile pictures are uploaded from the browser to the MVC application, forwarded to the API, validated (JPG, PNG, WebP or GIF, at most 5 MB) and saved to the Azurite blob containers `event-banners` and `profile-pictures`. The public blob URL is stored in the database (`Events.BannerUrl` and `Users.ProfilePictureUrl`) and the MVC views render the image from that URL. Only the API talks to blob storage (Microsoft, 2026e).
+
+Inside Docker the API connects to `azurite:10000` while the URL saved in the database uses `http://localhost:10000/devstoreaccount1`, which is the address the browser can reach. This is set with `BlobStorage:PublicBaseUrl`.
+
+Ready-made sample images are in `docs/sample-images/` for use as banners and a profile picture.
+
+## 10. API endpoints
+
+Public endpoints need no login and return an empty list when there is nothing to show.
+
+| Method | Endpoint | Access |
+|---|---|---|
+| POST | /api/auth/register | Public |
+| POST | /api/auth/login | Public |
+| POST | /api/auth/logout | Logged in |
+| GET | /api/events (filters: search, location, type, minDistance, maxDistance, from, to, upcoming) | Public |
+| GET | /api/events/{id} | Public |
+| GET | /api/events/{id}/categories | Public |
+| GET | /api/categories | Public |
+| GET | /api/event-categories/{id}/results | Public (published only; Organiser sees all) |
+| GET | /api/users/me | Logged in |
+| PUT | /api/users/me | Logged in |
+| POST | /api/users/me/profile-picture | Logged in |
+| GET | /api/users/me/enrolments | Logged in (401 otherwise) |
+| GET | /api/users/me/results | Logged in (401 otherwise) |
+| POST | /api/event-categories/{id}/enrolments | Participant |
+| DELETE | /api/enrolments/{id} | Participant |
+| GET | /api/events/mine | Organiser |
+| POST, PUT, DELETE | /api/events and /api/events/{id} | Organiser (owner) |
+| POST | /api/events/{id}/banner | Organiser (owner) |
+| GET | /api/events/{id}/enrolments | Organiser (owner) |
+| POST | /api/categories | Organiser |
+| POST | /api/events/{id}/categories | Organiser (owner) |
+| PUT, DELETE | /api/event-categories/{id} | Organiser (owner) |
+| GET | /api/event-categories/{id}/enrolments | Organiser (owner) |
+| PUT | /api/enrolments/{id}/status | Organiser (owner) |
+| POST | /api/results | Organiser |
+| PUT | /api/results/{id} | Organiser |
+| GET | /api/organiser/dashboard | Organiser |
+
+## 11. Design decisions
+
+- **Thin front end.** The MVC application only calls the API. It never touches the database, so the rules (capacity, duplicate entries, bib numbers, ownership) exist in one place.
+- **Cookie forwarding.** The API uses session authentication, so the MVC application captures the API session cookie at login, keeps it in its own session and sends it with each request.
+- **Enrolment workflow.** New enrolments start as Pending. The Organiser confirms them, which issues the next bib number for the event (starting at 1001). Results can only be captured for confirmed enrolments.
+- **Published results.** The `Verified` flag acts as the published flag. Participants and the public only see published results.
+- **Safe deletes.** Events, categories and enrolments that have dependent data return a 409 conflict with a clear message instead of failing.
+- **Resilient start-up.** The API retries the database connection while SQL Server starts in Docker, then migrates and seeds.
+- **Part 2 feedback addressed.** The status endpoint `PUT /api/enrolments/{id}/status`, a 401 for `users/me/enrolments` when not logged in, the `api/events/{id}/categories` route, non-nullable `Position` and `OverallRank`, a richer `PUT /api/results/{id}` and more unit tests.
+
+## 12. Unit tests
+
+The xUnit project in `ST10335260_PROG6212_POE_Part2/ST10335260_PROG6212_POE_Part2.Tests` contains 42 tests covering authentication, role enforcement, events, categories, enrolment workflow and results, using the EF Core in-memory provider. Run them from that folder with `dotnet test`.
+
+## 13. Continuous integration
+
+Two GitHub Actions workflows run on every push.
+
+- **Validate Repository Structure** checks that the `docs` folder, the planning files, the README, the three project folders and the Docker files exist.
+- **Build and Test** restores and builds the API and test project, runs the unit tests, then builds the MVC application.
+
+![GitHub Actions run passing](docs/Part3_CI_Success.png)
+
+## 14. Video walkthrough
+
+Unlisted YouTube video: 
+
+## 15. Part 1 and Part 2 summary
 
 - ERD: [docs/RaceDay_ERD.png](docs/RaceDay_ERD.png)
 - Endpoint plan: [docs/RaceDay_API_Endpoint_Plan.pdf](docs/RaceDay_API_Endpoint_Plan.pdf)
 - SQL script: [docs/RaceDay_Database.sql](docs/RaceDay_Database.sql)
-- Part 1 CI screenshot: [docs/RaceDay_ci_build_success.png](docs/RaceDay_ci_build_success.png)
+- Part 2 Swagger screenshot: [docs/Part2_Swagger.png](docs/Part2_Swagger.png)
 - Part 1 video: <https://youtu.be/RxXAerIaFFw>
+- Part 2 video: <https://youtu.be/-yi8OkdGL4E>
 
-## 13. Reference list
+## 16. Reference list
 
-Fielding, R., Nottingham, M. and Reschke, J. (eds.) (2022) *RFC 9110: HTTP Semantics*. Available at: https://www.rfc-editor.org/rfc/rfc9110 (Accessed: 19 October 2026).
+Bootstrap (2024) *Bootstrap 5.3 documentation*. Available at: https://getbootstrap.com/docs/5.3/ (Accessed: 17 November 2026).
 
-GitHub (n.d.) *GitHub Actions documentation*. Available at: https://docs.github.com/en/actions (Accessed: 19 October 2026).
+Docker (2026) *Docker Compose overview*. Available at: https://docs.docker.com/compose/ (Accessed: 17 November 2026).
 
-McKee, C., Emerl, R.D. and Miller, D. (n.d.) *BCrypt.Net-Next* (Version 4.2.0) [NuGet package]. Available at: https://www.nuget.org/packages/BCrypt.Net-Next (Accessed: 19 October 2026).
+GitHub (n.d.) *GitHub Actions documentation*. Available at: https://docs.github.com/en/actions (Accessed: 17 November 2026).
 
-Microsoft (2021) *Cascade Delete - EF Core*. Available at: https://learn.microsoft.com/en-us/ef/core/saving/cascade-delete (Accessed: 19 October 2026).
+Microsoft (2023) *EF Core In-Memory Database Provider*. Available at: https://learn.microsoft.com/en-us/ef/core/providers/in-memory/ (Accessed: 17 November 2026).
 
-Microsoft (2023) *EF Core In-Memory Database Provider*. Available at: https://learn.microsoft.com/en-us/ef/core/providers/in-memory/ (Accessed: 19 October 2026).
+Microsoft (2026a) *Overview of ASP.NET Core MVC*. Available at: https://learn.microsoft.com/en-us/aspnet/core/mvc/overview (Accessed: 17 November 2026).
 
-Microsoft (2025) *Get started with Swashbuckle and ASP.NET Core*. Available at: https://learn.microsoft.com/en-us/aspnet/core/tutorials/getting-started-with-swashbuckle (Accessed: 19 October 2026).
+Microsoft (2026b) *Filters in ASP.NET Core*. Available at: https://learn.microsoft.com/en-us/aspnet/core/mvc/controllers/filters (Accessed: 17 November 2026).
 
-Microsoft (2026a) *Create web APIs with ASP.NET Core*. Available at: https://learn.microsoft.com/en-us/aspnet/core/web-api/ (Accessed: 19 October 2026).
+Microsoft (2026c) *Migrations Overview - EF Core*. Available at: https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/ (Accessed: 17 November 2026).
 
-Microsoft (2026b) *Data Seeding - EF Core*. Available at: https://learn.microsoft.com/en-us/ef/core/modeling/data-seeding (Accessed: 19 October 2026).
+Microsoft (2026d) *Session and state management in ASP.NET Core*. Available at: https://learn.microsoft.com/en-us/aspnet/core/fundamentals/app-state (Accessed: 17 November 2026).
 
-Microsoft (2026c) *Filters in ASP.NET Core*. Available at: https://learn.microsoft.com/en-us/aspnet/core/mvc/controllers/filters (Accessed: 19 October 2026).
+Microsoft (2026e) *Use the Azurite emulator for local Azure Storage development*. Available at: https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite (Accessed: 17 November 2026).
 
-Microsoft (2026d) *Migrations Overview - EF Core*. Available at: https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/ (Accessed: 19 October 2026).
+Microsoft (2026f) *Prevent Cross-Site Request Forgery (XSRF/CSRF) attacks in ASP.NET Core*. Available at: https://learn.microsoft.com/en-us/aspnet/core/security/anti-request-forgery (Accessed: 17 November 2026).
 
-Microsoft (2026e) *Session in ASP.NET Core*. Available at: https://learn.microsoft.com/en-us/aspnet/core/fundamentals/app-state (Accessed: 19 October 2026).
-
-xUnit.net (n.d.) *xUnit.net*. Available at: https://xunit.net/ (Accessed: 19 October 2026).
+xUnit.net (n.d.) *xUnit.net*. Available at: https://xunit.net/ (Accessed: 17 November 2026).
