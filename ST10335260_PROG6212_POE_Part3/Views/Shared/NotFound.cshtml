@@ -1,0 +1,19 @@
+@{
+    ViewData["Title"] = "Page not found";
+    var user = Context.Session.GetSessionUser();
+}
+<section class="container py-5">
+    <div class="rd-card empty-state mx-auto" style="max-width: 640px;">
+        <div class="art"><i class="bi bi-compass"></i></div>
+        <h2>Off the course</h2>
+        <p>We could not find that page. The event may have been removed or the link may be out of date.</p>
+        @if (user is { IsOrganiser: true })
+        {
+            <a class="btn btn-primary" asp-controller="Organiser" asp-action="Dashboard">Back to my dashboard</a>
+        }
+        else
+        {
+            <a class="btn btn-primary" asp-controller="Home" asp-action="Index">Browse events</a>
+        }
+    </div>
+</section>

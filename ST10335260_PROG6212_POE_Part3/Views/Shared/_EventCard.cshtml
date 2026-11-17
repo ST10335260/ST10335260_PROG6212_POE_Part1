@@ -1,0 +1,36 @@
+@model EventSummary
+<a class="rd-card event-card" asp-controller="Events" asp-action="Details" asp-route-id="@Model.EventId">
+    <div class="event-banner ph-@Format.TypeClass(Model.EventType)">
+        <i class="bi @Format.TypeIcon(Model.EventType) ph-icon"></i>
+        @if (!string.IsNullOrEmpty(Model.BannerUrl))
+        {
+            <img src="@Model.BannerUrl" alt="@Model.EventName banner" loading="lazy" onerror="this.remove()" />
+        }
+        <span class="type-pill"><i class="bi @Format.TypeIcon(Model.EventType)"></i> @Model.EventType</span>
+        <div class="date-badge">
+            <span class="d">@Model.EventDate.Day</span>
+            <span class="m">@Format.Month(Model.EventDate)</span>
+        </div>
+    </div>
+    <div class="event-body">
+        <h3>@Model.EventName</h3>
+        <p class="meta"><i class="bi bi-geo-alt-fill"></i> @Model.Location</p>
+        <p class="meta"><i class="bi bi-clock-fill"></i> @Format.ShortDate(Model.EventDate) at @Format.Time(Model.EventDate)</p>
+        <div class="chip-row">
+            <span class="chip"><i class="bi bi-signpost-split"></i> @Format.Distance(Model.DistanceKm)</span>
+            @if (Model.IsPast)
+            {
+                <span class="chip done"><i class="bi bi-flag-fill"></i> Completed</span>
+            }
+            else if (Model.MinEntryFee is { } fee)
+            {
+                <span class="chip price"><i class="bi bi-ticket-perforated"></i> From @Format.Money(fee)</span>
+            }
+            else
+            {
+                <span class="chip">Categories coming soon</span>
+            }
+            <span class="chip"><i class="bi bi-people-fill"></i> @Model.EnrolmentCount entered</span>
+        </div>
+    </div>
+</a>
