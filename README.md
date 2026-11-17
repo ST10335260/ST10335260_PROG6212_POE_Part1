@@ -197,7 +197,7 @@ Two GitHub Actions workflows run on every push.
 
 ## 14. Video walkthrough
 
-Unlisted YouTube video: 
+Unlisted YouTube video Part 3: https://youtu.be/xHlYAwYTHUM
 
 ## 15. Part 1 and Part 2 summary
 
