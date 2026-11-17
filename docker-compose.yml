@@ -1,0 +1,59 @@
+name: raceday
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "RaceDay_Passw0rd!"
+    ports:
+      - "14330:1433"
+    volumes:
+      - sqldata:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q \"SELECT 1\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    command: azurite-blob --blobHost 0.0.0.0 --skipApiVersionCheck --loose
+    ports:
+      - "10000:10000"
+    volumes:
+      - blobdata:/data
+
+  api:
+    build:
+      context: ./ST10335260_PROG6212_POE_Part2/ST10335260_PROG6212_POE_Part2
+    depends_on:
+      db:
+        condition: service_healthy
+      azurite:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: "Server=db;Database=RaceDayApi;User Id=sa;Password=RaceDay_Passw0rd!;TrustServerCertificate=True;Encrypt=False"
+      BlobStorage__ConnectionString: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;"
+      BlobStorage__PublicBaseUrl: "http://localhost:10000/devstoreaccount1"
+      Seed__DemoData: "true"
+      Swagger__Enabled: "true"
+    ports:
+      - "5223:8080"
+
+  web:
+    build:
+      context: ./ST10335260_PROG6212_POE_Part3
+    depends_on:
+      - api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ApiSettings__BaseUrl: "http://api:8080/"
+    ports:
+      - "8080:8080"
+
+volumes:
+  sqldata:
+  blobdata:
